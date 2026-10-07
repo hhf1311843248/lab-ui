@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { setCssVar } from '@/utils'
-
 import { useDesign } from '@/hooks/web/useDesign'
 import { useWatermark } from '@/hooks/web/useWatermark'
 import { useAppStore } from '@/store/modules/app'
@@ -49,50 +47,6 @@ const size = ref(appStore.getSize)
 
 const sizeChange = (show: boolean) => {
   appStore.setSize(show)
-}
-
-// 多语言图标
-const locale = ref(appStore.getLocale)
-
-const localeChange = (show: boolean) => {
-  appStore.setLocale(show)
-}
-
-// 消息图标
-const message = ref(appStore.getMessage)
-
-const messageChange = (show: boolean) => {
-  appStore.setMessage(show)
-}
-
-// IM 即时通讯图标
-const im = ref(appStore.getIm)
-
-const imChange = (show: boolean) => {
-  appStore.setIm(show)
-}
-
-// 标签页
-const tagsView = ref(appStore.getTagsView)
-
-const tagsViewChange = (show: boolean) => {
-  // 切换标签栏显示时，同步切换标签栏的高度
-  setCssVar('--tags-view-height', show ? '35px' : '0px')
-  appStore.setTagsView(show)
-}
-
-// 标签页沉浸
-const tagsViewImmerse = ref(appStore.getTagsViewImmerse)
-
-const tagsViewImmerseChange = (immerse: boolean) => {
-  appStore.setTagsViewImmerse(immerse)
-}
-
-// 标签页图标
-const tagsViewIcon = ref(appStore.getTagsViewIcon)
-
-const tagsViewIconChange = (show: boolean) => {
-  appStore.setTagsViewIcon(show)
 }
 
 // logo
@@ -179,36 +133,6 @@ watch(
     <div class="flex items-center justify-between">
       <span class="text-14px">{{ t('setting.sizeIcon') }}</span>
       <ElSwitch v-model="size" @change="sizeChange" />
-    </div>
-
-    <div class="flex items-center justify-between">
-      <span class="text-14px">{{ t('setting.localeIcon') }}</span>
-      <ElSwitch v-model="locale" @change="localeChange" />
-    </div>
-
-    <div class="flex items-center justify-between">
-      <span class="text-14px">{{ t('setting.messageIcon') }}</span>
-      <ElSwitch v-model="message" @change="messageChange" />
-    </div>
-
-    <div class="flex items-center justify-between">
-      <span class="text-14px">{{ t('setting.imIcon') }}</span>
-      <ElSwitch v-model="im" @change="imChange" />
-    </div>
-
-    <div class="flex items-center justify-between">
-      <span class="text-14px">{{ t('setting.tagsView') }}</span>
-      <ElSwitch v-model="tagsView" @change="tagsViewChange" />
-    </div>
-
-    <div class="flex items-center justify-between">
-      <span class="text-14px">{{ t('setting.tagsViewImmerse') }}</span>
-      <ElSwitch v-model="tagsViewImmerse" @change="tagsViewImmerseChange" />
-    </div>
-
-    <div class="flex items-center justify-between">
-      <span class="text-14px">{{ t('setting.tagsViewIcon') }}</span>
-      <ElSwitch v-model="tagsViewIcon" @change="tagsViewIconChange" />
     </div>
 
     <div class="flex items-center justify-between">

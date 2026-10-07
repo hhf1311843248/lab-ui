@@ -1,5 +1,5 @@
 <template>
-  <h2 class="enter-x mb-3 text-center text-2xl font-bold xl:text-center xl:text-3xl">
+  <h2 class="glow-text enter-x mb-3 text-center text-2xl font-bold xl:text-center xl:text-3xl">
     {{ getFormTitle }}
   </h2>
 </template>

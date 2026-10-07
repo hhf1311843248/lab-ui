@@ -1,13 +1,13 @@
 :root {
-  --login-bg-color: #293146;
+  --login-bg-color: rgba(10, 14, 26, 0.55);
 
   --left-menu-max-width: 200px;
 
   --left-menu-min-width: 64px;
 
-  --left-menu-bg-color: #001529;
+  --left-menu-bg-color: rgba(10, 14, 26, 0.95);
 
-  --left-menu-bg-light-color: #0f2438;
+  --left-menu-bg-light-color: transparent;
 
   --left-menu-bg-active-color: var(--el-color-primary);
 
@@ -25,17 +25,17 @@
   /* logo end */
 
   /* header start */
-  --top-header-bg-color: '#fff';
+  --top-header-bg-color: rgba(10, 14, 26, 0.6);
 
-  --top-header-text-color: 'inherit';
+  --top-header-text-color: #e2e8f0;
 
-  --top-header-hover-color: #f6f6f6;
+  --top-header-hover-color: rgba(0, 240, 255, 0.08);
 
   --top-tool-height: var(--logo-height);
 
   --top-tool-p-x: 0;
 
-  --tags-view-height: 35px;
+  --tags-view-height: 0px;
   /* header start */
 
   /* tab menu start */

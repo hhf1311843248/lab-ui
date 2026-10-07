@@ -3,6 +3,12 @@
     :class="prefixCls"
     class="relative h-[100%] lt-md:px-10px lt-sm:px-10px lt-xl:px-10px lt-xl:px-10px"
   >
+    <!-- 赛博背景层：网格 + 光晕 -->
+    <div class="cyber-bg-grid"></div>
+    <div class="cyber-bg-glow glow-1"></div>
+    <div class="cyber-bg-glow glow-2"></div>
+    <div class="cyber-bg-glow glow-3"></div>
+
     <div class="relative mx-auto h-full flex">
       <div
         :class="`${prefixCls}__left flex-1 bg-gray-500 bg-opacity-20 relative p-30px lt-xl:hidden overflow-x-hidden overflow-y-auto`"
@@ -20,7 +26,7 @@
             tag="div"
           >
             <img key="1" alt="" class="w-350px" src="@/assets/svgs/login-box-bg.svg" />
-            <div key="2" class="text-3xl text-white">{{ t('login.welcome') }}</div>
+            <div key="2" class="glow-text text-3xl">{{ t('login.welcome') }}</div>
             <div key="3" class="mt-5 text-14px font-normal text-white">
               {{ t('login.message') }}
             </div>
@@ -40,7 +46,6 @@
             <span class="text-20px font-bold">{{ underlineToHump(appStore.getTitle) }}</span>
           </div>
           <div class="flex items-center justify-end space-x-10px h-48px">
-            <ThemeSwitch />
             <LocaleDropdown />
           </div>
         </div>
@@ -72,7 +77,6 @@ import { underlineToHump } from '@/utils'
 
 import { useDesign } from '@/hooks/web/useDesign'
 import { useAppStore } from '@/store/modules/app'
-import { ThemeSwitch } from '@/layout/components/ThemeSwitch'
 import { LocaleDropdown } from '@/layout/components/LocaleDropdown'
 
 import {
@@ -97,20 +101,70 @@ $prefix-cls: #{$namespace}-login;
 
 .#{$prefix-cls} {
   overflow: auto;
+  background: var(--bg-primary);
 
   &__left {
+    background:
+      linear-gradient(135deg, rgba(0, 240, 255, 0.08) 0%, rgba(123, 47, 247, 0.12) 100%),
+      rgba(10, 14, 26, 0.55);
+
     &::before {
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: -1;
-      width: 100%;
-      height: 100%;
-      background-image: url('@/assets/svgs/login-bg.svg');
-      background-position: center;
-      background-repeat: no-repeat;
-      content: '';
+      display: none;
     }
+  }
+}
+
+/* 赛博背景层：网格线 */
+.cyber-bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 赛博背景层：径向光晕 */
+.cyber-bg-glow {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  animation: float 8s ease-in-out infinite;
+  z-index: 0;
+}
+.glow-1 {
+  top: -10%;
+  left: -5%;
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.25) 0%, transparent 70%);
+}
+.glow-2 {
+  bottom: -15%;
+  right: -10%;
+  width: 560px;
+  height: 560px;
+  background: radial-gradient(circle, rgba(123, 47, 247, 0.3) 0%, transparent 70%);
+  animation-delay: -3s;
+}
+.glow-3 {
+  top: 30%;
+  left: 45%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+  animation-delay: -5s;
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-30px);
   }
 }
 </style>

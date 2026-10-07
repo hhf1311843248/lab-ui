@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-card shadow="never">
+    <el-card shadow="never" class="card-glow">
       <el-skeleton :loading="loading" animated>
         <el-row :gutter="16" justify="space-between">
           <el-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24">
@@ -9,7 +9,7 @@
                 <img src="@/assets/imgs/avatar.gif" alt="" />
               </el-avatar>
               <div>
-                <div class="text-20px">
+                <div class="glow-text text-20px">
                   {{ t('workplace.welcome') }} {{ username }} {{ t('workplace.happyDay') }}
                 </div>
                 <div class="mt-10px text-14px text-gray-500">
@@ -19,31 +19,29 @@
             </div>
           </el-col>
           <el-col :xl="12" :lg="12" :md="12" :sm="24" :xs="24">
-            <div class="h-70px flex items-center justify-end lt-sm:mt-10px">
-              <div class="px-8px text-right">
-                <div class="mb-16px text-14px text-gray-400">{{ t('workplace.project') }}</div>
+            <div class="h-70px flex items-center justify-end gap-12px lt-sm:mt-10px">
+              <div class="stat-card flex-1">
+                <div class="label">{{ t('workplace.project') }}</div>
                 <CountTo
-                  class="text-20px"
+                  class="value"
                   :start-val="0"
                   :end-val="totalSate.project"
                   :duration="2600"
                 />
               </div>
-              <el-divider direction="vertical" />
-              <div class="px-8px text-right">
-                <div class="mb-16px text-14px text-gray-400">{{ t('workplace.toDo') }}</div>
+              <div class="stat-card flex-1">
+                <div class="label">{{ t('workplace.toDo') }}</div>
                 <CountTo
-                  class="text-20px"
+                  class="value"
                   :start-val="0"
                   :end-val="totalSate.todo"
                   :duration="2600"
                 />
               </div>
-              <el-divider direction="vertical" border-style="dashed" />
-              <div class="px-8px text-right">
-                <div class="mb-16px text-14px text-gray-400">{{ t('workplace.access') }}</div>
+              <div class="stat-card flex-1">
+                <div class="label">{{ t('workplace.access') }}</div>
                 <CountTo
-                  class="text-20px"
+                  class="value"
                   :start-val="0"
                   :end-val="totalSate.access"
                   :duration="2600"
@@ -61,7 +59,7 @@
       <el-card shadow="never">
         <template #header>
           <div class="h-3 flex justify-between">
-            <span>{{ t('workplace.project') }}</span>
+            <span class="glow-text">{{ t('workplace.project') }}</span>
             <el-link
               type="primary"
               :underline="false"
@@ -86,7 +84,7 @@
             >
               <el-card
                 shadow="hover"
-                class="flex-1 cursor-pointer"
+                class="card-glow flex-1 cursor-pointer"
                 body-class="flex h-full flex-col"
                 @click="handleProjectClick(item.message)"
               >
@@ -146,7 +144,7 @@
       <el-card shadow="never">
         <template #header>
           <div class="h-3 flex justify-between">
-            <span>{{ t('workplace.shortcutOperation') }}</span>
+            <span class="glow-text">{{ t('workplace.shortcutOperation') }}</span>
           </div>
         </template>
         <el-skeleton :loading="loading" animated>
@@ -165,7 +163,7 @@
       <el-card shadow="never" class="mt-8px">
         <template #header>
           <div class="h-3 flex justify-between">
-            <span>{{ t('workplace.notice') }}</span>
+            <span class="glow-text">{{ t('workplace.notice') }}</span>
             <el-link type="primary" :underline="false">{{ t('action.more') }}</el-link>
           </div>
         </template>

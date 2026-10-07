@@ -59,10 +59,10 @@ export const useAppStore = defineStore('app', {
       screenfull: true, // 全屏图标
       search: true, // 搜索图标
       size: true, // 尺寸图标
-      locale: true, // 多语言图标
-      message: true, // 消息图标
-      im: true, //IM即时通讯图标
-      tagsView: true, // 标签页
+      locale: false, // 多语言图标
+      message: false, // 消息图标
+      im: false, //IM即时通讯图标
+      tagsView: false, // 标签页
       tagsViewImmerse: false, // 标签页沉浸
       tagsViewIcon: true, // 是否显示标签图标
       logo: true, // logo
@@ -72,37 +72,37 @@ export const useAppStore = defineStore('app', {
       fixedMenu: wsCache.get('fixedMenu') || false, // 是否固定菜单
 
       layout: normalizeLayout(wsCache.get(CACHE_KEY.LAYOUT)), // layout布局
-      isDark: wsCache.get(CACHE_KEY.IS_DARK) || false, // 是否是暗黑模式
+      isDark: true, // 锁定深色赛博主题
       currentSize: wsCache.get('default') || 'default', // 组件尺寸
       theme: wsCache.get(CACHE_KEY.THEME) || {
-        // 主题色
-        elColorPrimary: '#409eff',
+        // 主题色（赛博青）
+        elColorPrimary: '#00f0ff',
         // 左侧菜单边框颜色
-        leftMenuBorderColor: 'inherit',
+        leftMenuBorderColor: 'rgba(0, 240, 255, 0.15)',
         // 左侧菜单背景颜色
-        leftMenuBgColor: '#001529',
-        // 左侧菜单浅色背景颜色
-        leftMenuBgLightColor: '#0f2438',
+        leftMenuBgColor: 'rgba(10, 14, 26, 0.95)',
+        // 左侧菜单浅色背景颜色（赛博：二级菜单项透明，悬浮/激活才上色）
+        leftMenuBgLightColor: 'transparent',
         // 左侧菜单选中背景颜色
-        leftMenuBgActiveColor: 'var(--el-color-primary)',
+        leftMenuBgActiveColor: 'transparent',
         // 左侧菜单收起选中背景颜色
-        leftMenuCollapseBgActiveColor: 'var(--el-color-primary)',
+        leftMenuCollapseBgActiveColor: 'transparent',
         // 左侧菜单字体颜色
-        leftMenuTextColor: '#bfcbd9',
+        leftMenuTextColor: '#94a3b8',
         // 左侧菜单选中字体颜色
-        leftMenuTextActiveColor: '#fff',
+        leftMenuTextActiveColor: '#00f0ff',
         // logo字体颜色
         logoTitleTextColor: '#fff',
         // logo边框颜色
-        logoBorderColor: 'inherit',
+        logoBorderColor: 'rgba(0, 240, 255, 0.15)',
         // 头部背景颜色
-        topHeaderBgColor: '#fff',
+        topHeaderBgColor: 'rgba(10, 14, 26, 0.6)',
         // 头部字体颜色
-        topHeaderTextColor: 'inherit',
+        topHeaderTextColor: '#e2e8f0',
         // 头部悬停颜色
-        topHeaderHoverColor: '#f6f6f6',
+        topHeaderHoverColor: 'rgba(0, 240, 255, 0.08)',
         // 头部边框颜色
-        topToolBorderColor: '#eee'
+        topToolBorderColor: 'rgba(0, 240, 255, 0.15)'
       }
     }
   },

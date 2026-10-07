@@ -63,7 +63,11 @@ export default defineComponent({
           ></div>
         ) : undefined}
 
-        {renderLayout()}
+        {/* 赛博背景层：网格 + 光晕 */}
+        <div class="cyber-bg-grid"></div>
+        <div class="cyber-bg-glow"></div>
+
+        <div class="cyber-content">{renderLayout()}</div>
 
         <Backtop></Backtop>
 
@@ -79,5 +83,37 @@ $prefix-cls: #{$namespace}-layout;
 
 .#{$prefix-cls} {
   background-color: var(--app-content-bg-color);
+}
+
+/* 赛博背景层：网格线 */
+.cyber-bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 赛博背景层：径向光晕 */
+.cyber-bg-glow {
+  position: fixed;
+  top: -20%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(123, 47, 247, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 内容层：必须盖在背景层之上 */
+.cyber-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
 }
 </style>

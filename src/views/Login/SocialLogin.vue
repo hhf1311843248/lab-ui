@@ -20,7 +20,7 @@
             tag="div"
           >
             <img key="1" alt="" class="w-350px" src="@/assets/svgs/login-box-bg.svg" />
-            <div key="2" class="text-3xl text-white">{{ t('login.welcome') }}</div>
+            <div key="2" class="glow-text text-3xl">{{ t('login.welcome') }}</div>
             <div key="3" class="mt-5 text-14px font-normal text-white">
               {{ t('login.message') }}
             </div>
@@ -39,7 +39,6 @@
             <span class="text-20px font-bold">{{ underlineToHump(appStore.getTitle) }}</span>
           </div>
           <div class="flex items-center justify-end space-x-10px h-48px">
-            <ThemeSwitch />
             <LocaleDropdown class="dark:text-white lt-xl:text-white" />
           </div>
         </div>
@@ -162,7 +161,6 @@ import { usePermissionStore } from '@/store/modules/permission'
 
 import * as LoginApi from '@/api/login'
 import * as authUtil from '@/utils/auth'
-import { ThemeSwitch } from '@/layout/components/ThemeSwitch'
 import { LocaleDropdown } from '@/layout/components/LocaleDropdown'
 import { LoginStateEnum, useFormValid, useLoginState } from './components/useLogin'
 import LoginFormTitle from './components/LoginFormTitle.vue'
@@ -329,19 +327,15 @@ $prefix-cls: #{$namespace}-login;
 
 .#{$prefix-cls} {
   overflow: auto;
+  background: var(--bg-primary);
 
   &__left {
+    background:
+      linear-gradient(135deg, rgba(0, 240, 255, 0.08) 0%, rgba(123, 47, 247, 0.12) 100%),
+      rgba(10, 14, 26, 0.55);
+
     &::before {
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: -1;
-      width: 100%;
-      height: 100%;
-      background-image: url('@/assets/svgs/login-bg.svg');
-      background-position: center;
-      background-repeat: no-repeat;
-      content: '';
+      display: none;
     }
   }
 }

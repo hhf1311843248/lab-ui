@@ -587,35 +587,29 @@ $prefix-cls: #{$namespace}-menu;
       }
     }
 
-    // 设置子菜单悬停的高亮和背景色
+    // 设置子菜单悬停的高亮和背景色（赛博：与参考项目一致，淡青色填充）
     .#{$elNamespace}-sub-menu__title,
     .#{$elNamespace}-menu-item {
       &:hover {
         color: var(--left-menu-text-active-color) !important;
-        background-color: var(--left-menu-bg-color) !important;
+        background-color: var(--left-menu-hover-bg-color) !important;
       }
     }
 
-    // 设置选中时的高亮背景和高亮颜色
+    // 设置选中时的高亮背景和高亮颜色（赛博：青色渐变）
     .#{$elNamespace}-menu-item.is-active {
       color: var(--left-menu-text-active-color) !important;
-      background-color: var(--left-menu-bg-active-color) !important;
+      background-image: var(--left-menu-bg-active-gradient) !important;
+      background-color: transparent !important;
 
       &:hover {
-        background-color: var(--left-menu-bg-active-color) !important;
+        background-image: var(--left-menu-bg-active-gradient) !important;
+        background-color: transparent !important;
       }
     }
 
     .#{$elNamespace}-menu-item.is-active {
       position: relative;
-    }
-
-    // 设置子菜单的背景颜色
-    .#{$elNamespace}-menu {
-      .#{$elNamespace}-sub-menu__title,
-      .#{$elNamespace}-menu-item:not(.is-active) {
-        background-color: var(--left-menu-bg-light-color) !important;
-      }
     }
   }
 
@@ -626,7 +620,8 @@ $prefix-cls: #{$namespace}-menu;
     & > .is-active,
     & > .is-active > .#{$elNamespace}-sub-menu__title {
       position: relative;
-      background-color: var(--left-menu-collapse-bg-active-color) !important;
+      background-image: var(--left-menu-bg-active-gradient) !important;
+      background-color: transparent !important;
     }
   }
 
@@ -751,22 +746,24 @@ $prefix-cls: #{$namespace}-menu-popper;
     }
   }
 
-  // 设置子菜单悬停的高亮和背景色
+  // 设置子菜单悬停的高亮和背景色（赛博：与参考项目一致，淡青色填充）
   .el-sub-menu__title,
   .el-menu-item {
     &:hover {
       color: var(--left-menu-text-active-color) !important;
-      background-color: var(--left-menu-bg-color) !important;
+      background-color: var(--left-menu-hover-bg-color) !important;
     }
   }
 
-  // 设置选中时的高亮背景
+  // 设置选中时的高亮背景（赛博：青色渐变）
   .el-menu-item.is-active {
     position: relative;
-    background-color: var(--left-menu-bg-active-color) !important;
+    background-image: var(--left-menu-bg-active-gradient) !important;
+    background-color: transparent !important;
 
     &:hover {
-      background-color: var(--left-menu-bg-active-color) !important;
+      background-image: var(--left-menu-bg-active-gradient) !important;
+      background-color: transparent !important;
     }
   }
 }

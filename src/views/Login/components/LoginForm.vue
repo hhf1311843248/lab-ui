@@ -7,7 +7,6 @@
     class="login-form"
     label-position="top"
     label-width="120px"
-    size="large"
   >
     <el-row class="mx-[-10px]">
       <el-col :span="24" class="px-10px">
@@ -17,13 +16,17 @@
       </el-col>
       <el-col :span="24" class="px-10px">
         <el-form-item v-if="loginData.tenantEnable === 'true'" prop="tenantName">
-          <el-input
+          <el-select
             v-model="loginData.loginForm.tenantName"
-            :placeholder="t('login.tenantNamePlaceholder')"
-            :prefix-icon="iconHouse"
-            link
-            type="primary"
-          />
+            class="w-full"
+            :placeholder="t('login.tenantSelectPlaceholder')"
+            filterable
+          >
+            <template #prefix>
+              <Icon icon="ep:house" />
+            </template>
+            <el-option v-for="tenant in tenantList" :key="tenant.id" :label="tenant.name" :value="tenant.name" />
+          </el-select>
         </el-form-item>
       </el-col>
       <el-col :span="24" class="px-10px">
@@ -47,7 +50,7 @@
           />
         </el-form-item>
       </el-col>
-      <el-col :span="24" class="px-10px mt-[-20px] mb-[-20px]">
+      <el-col :span="24" class="px-10px">
         <el-form-item>
           <el-row justify="space-between" style="width: 100%">
             <el-col :span="6">
@@ -84,54 +87,9 @@
       />
       <el-col :span="24" class="px-10px">
         <el-form-item>
-          <el-row :gutter="5" justify="space-between" style="width: 100%">
-            <el-col :span="8">
-              <el-button class="w-full" @click="setLoginState(LoginStateEnum.MOBILE)">
-                {{ t('login.btnMobile') }}
-              </el-button>
-            </el-col>
-            <el-col :span="8">
-              <el-button class="w-full" @click="setLoginState(LoginStateEnum.QR_CODE)">
-                {{ t('login.btnQRCode') }}
-              </el-button>
-            </el-col>
-            <el-col :span="8">
-              <el-button class="w-full" @click="setLoginState(LoginStateEnum.REGISTER)">
-                {{ t('login.btnRegister') }}
-              </el-button>
-            </el-col>
-          </el-row>
-        </el-form-item>
-      </el-col>
-      <el-divider content-position="center">{{ t('login.otherLogin') }}</el-divider>
-      <el-col :span="24" class="px-10px">
-        <el-form-item>
-          <div class="w-full flex justify-between">
-            <Icon
-              v-for="(item, key) in socialList"
-              :key="key"
-              :icon="item.icon"
-              :size="30"
-              class="anticon cursor-pointer"
-              color="#999"
-              @click="doSocialLogin(item.type)"
-            />
-          </div>
-        </el-form-item>
-      </el-col>
-      <el-divider content-position="center">萌新必读</el-divider>
-      <el-col :span="24" class="px-10px">
-        <el-form-item>
-          <div class="w-full flex justify-between">
-            <el-link href="https://doc.iocoder.cn/" target="_blank">📚开发指南</el-link>
-            <el-link href="https://doc.iocoder.cn/video/" target="_blank">🔥视频教程</el-link>
-            <el-link href="https://www.iocoder.cn/Interview/good-collection/" target="_blank">
-              ⚡面试手册
-            </el-link>
-            <el-link href="http://static.yudao.iocoder.cn/mp/Aix9975.jpeg" target="_blank">
-              🤝外包咨询
-            </el-link>
-          </div>
+          <el-button class="w-full sso-btn" @click="setLoginState(LoginStateEnum.SSO)">
+            SSO登录/注册
+          </el-button>
         </el-form-item>
       </el-col>
     </el-row>
@@ -152,8 +110,6 @@ import { LoginStateEnum, useFormValid, useLoginState } from './useLogin'
 defineOptions({ name: 'LoginForm' })
 
 const { t } = useI18n()
-const message = useMessage()
-const iconHouse = useIcon({ icon: 'ep:house' })
 const iconAvatar = useIcon({ icon: 'ep:avatar' })
 const iconLock = useIcon({ icon: 'ep:lock' })
 const formLogin = ref()
@@ -165,6 +121,7 @@ const redirect = ref<string>('')
 const loginLoading = ref(false)
 const verify = ref()
 const captchaType = ref('blockPuzzle') // blockPuzzle 滑块 clickWord 点击文字 pictureWord 文字验证码
+const tenantList = ref<{ id: number; name: string }[]>([]) // 组织/厂区（租户）列表
 
 const getShow = computed(() => unref(getLoginState) === LoginStateEnum.LOGIN)
 
@@ -185,13 +142,6 @@ const loginData = reactive({
     rememberMe: true // 默认记录我。如果不需要，可手动修改
   }
 })
-
-const socialList = [
-  { icon: 'ant-design:wechat-filled', type: 30 },
-  { icon: 'ant-design:dingtalk-circle-filled', type: 20 },
-  { icon: 'ant-design:github-filled', type: 0 },
-  { icon: 'ant-design:alipay-circle-filled', type: 0 }
-]
 
 // 获取验证码
 const getCode = async () => {
@@ -235,6 +185,12 @@ const getTenantByWebsite = async () => {
     }
   }
 }
+// 加载组织/厂区（租户）列表
+const getTenantList = async () => {
+  if (loginData.tenantEnable === 'true') {
+    tenantList.value = (await LoginApi.getTenantList()) || []
+  }
+}
 const loading = ref() // ElLoading.service 返回的实例
 // 登录
 const handleLogin = async (params: any) => {
@@ -273,45 +229,10 @@ const handleLogin = async (params: any) => {
     }
   } finally {
     loginLoading.value = false
-    loading.value.close()
+    loading.value?.close()
   }
 }
 
-// 社交登录
-const doSocialLogin = async (type: number) => {
-  if (type === 0) {
-    message.error('此方式未配置')
-  } else {
-    loginLoading.value = true
-    if (loginData.tenantEnable === 'true') {
-      // 尝试先通过 tenantName 获取租户
-      await getTenantId()
-      // 如果获取不到，则需要弹出提示，进行处理
-      if (!authUtil.getTenantId()) {
-        try {
-          const data = await message.prompt('请输入租户名称', t('common.reminder'))
-          if (data?.action !== 'confirm') throw 'cancel'
-          const res = await LoginApi.getTenantIdByName(data.value)
-          authUtil.setTenantId(res)
-        } catch (error) {
-          if (error === 'cancel') return
-        } finally {
-          loginLoading.value = false
-        }
-      }
-    }
-    // 计算 redirectUri
-    // 注意: type、redirect 需要先 encode 一次，否则钉钉回调会丢失。
-    // 配合 social-login.vue#getUrlValue() 使用
-    const redirectUri =
-      location.origin +
-      '/social-login?' +
-      encodeURIComponent(`type=${type}&redirect=${redirect.value || '/'}`)
-
-    // 进行跳转
-    window.location.href = await LoginApi.socialAuthRedirect(type, encodeURIComponent(redirectUri))
-  }
-}
 watch(
   () => currentRoute.value,
   (route: RouteLocationNormalizedLoaded) => {
@@ -324,27 +245,126 @@ watch(
 onMounted(() => {
   getLoginFormCache()
   getTenantByWebsite()
+  getTenantList()
 })
 </script>
 
 <style lang="scss" scoped>
-:deep(.anticon) {
-  &:hover {
-    color: var(--el-color-primary) !important;
+// 压缩表单项纵向间距，让登录组件更紧凑
+:deep(.el-form-item) {
+  margin-bottom: 14px;
+}
+
+// 输入框：白底、浅灰描边，聚焦橙色
+:deep(.el-input__wrapper) {
+  min-height: 46px;
+  background: #fff;
+  border: 1px solid #dcdcdc;
+  border-radius: 3px;
+  box-shadow: none !important;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+
+  &.is-focus {
+    border-color: #ea5420;
+    box-shadow: 0 0 0 2px rgba(234, 84, 32, 0.18) !important;
   }
 }
 
-.login-code {
-  float: right;
-  width: 100%;
-  height: 38px;
+// 组织/厂区下拉：白底、浅灰描边，与输入框一致
+:deep(.el-select__wrapper) {
+  min-height: 46px;
+  background: #fff;
+  border: 1px solid #dcdcdc;
+  border-radius: 3px;
+  box-shadow: none !important;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 
-  img {
-    width: 100%;
-    height: auto;
-    max-width: 100px;
-    vertical-align: middle;
-    cursor: pointer;
+  &.is-focused {
+    border-color: #ea5420;
+    box-shadow: 0 0 0 2px rgba(234, 84, 32, 0.18) !important;
   }
+}
+
+// 记住我勾选框：橙色圆形
+:deep(.el-checkbox__input .el-checkbox__inner) {
+  border-radius: 50%;
+}
+
+:deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #ea5420;
+  border-color: #ea5420;
+}
+
+:deep(.el-checkbox__input.is-checked .el-checkbox__inner::after) {
+  border-color: #fff;
+}
+
+// 忘记密码链接：橙色
+:deep(.el-link--primary) {
+  color: #ea5420;
+}
+
+// 登录按钮：橙色纯色
+:deep(.el-button--primary) {
+  height: 46px;
+  background: #ea5420;
+  border: none;
+  border-radius: 3px;
+  letter-spacing: 0.06em;
+
+  &:hover,
+  &:focus {
+    background: #ea5420;
+    filter: brightness(1.06);
+  }
+}
+
+// SSO 按钮：橙色纯色，与登录按钮一致
+.sso-btn {
+  height: 46px;
+  background: #ea5420;
+  border: none;
+  border-radius: 3px;
+  color: #fff;
+  letter-spacing: 0.06em;
+
+  &:hover,
+  &:focus {
+    background: #ea5420;
+    filter: brightness(1.06);
+  }
+}
+</style>
+
+<style lang="scss">
+// 暗色模式下登录表单适配：深色输入框、白色文字
+html.dark .login-form .el-input__wrapper {
+  background: #3f4752;
+  border-color: #525b68;
+}
+
+html.dark .login-form .el-input__wrapper.is-focus {
+  border-color: #ea5420;
+}
+
+html.dark .login-form .el-select__wrapper {
+  background: #3f4752;
+  border-color: #525b68;
+}
+
+html.dark .login-form .el-select__wrapper.is-focused {
+  border-color: #ea5420;
+}
+
+html.dark .login-form .el-input__inner {
+  color: #fff;
+}
+
+html.dark .login-form .el-select__selected-item {
+  color: #fff;
 }
 </style>

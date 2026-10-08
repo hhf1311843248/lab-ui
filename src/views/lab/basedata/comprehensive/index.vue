@@ -1,3 +1,4 @@
+<!-- 基础数据-综合判定维护（供应商同步，仅查看） -->
 <template>
   <ContentWrap>
     <!-- 搜索工作栏 -->
@@ -6,21 +7,32 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="85px"
+      label-width="90px"
     >
-      <el-form-item label="综合判定编号" prop="code">
-        <el-input
-          v-model="queryParams.code"
-          placeholder="请输入综合判定编号"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
+      <el-form-item label="所属段" prop="segmentCode">
+        <el-select v-model="queryParams.segmentCode" placeholder="请选择所属段" clearable class="!w-200px">
+          <el-option
+            v-for="item in LabSectionEnum"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="名称" prop="name">
+      <el-form-item label="判定方式" prop="mode">
+        <el-select v-model="queryParams.mode" placeholder="请选择判定方式" clearable class="!w-200px">
+          <el-option
+            v-for="item in LabComprehensiveModeEnum"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="规则名称" prop="name">
         <el-input
           v-model="queryParams.name"
-          placeholder="请输入名称"
+          placeholder="请输入规则名称"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
@@ -29,14 +41,6 @@
       <el-form-item>
         <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
         <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button>
-        <el-button
-          type="primary"
-          plain
-          @click="openForm('create')"
-          v-hasPermi="['lab:comprehensive:create']"
-        >
-          <Icon icon="ep:plus" class="mr-5px" /> 新增
-        </el-button>
       </el-form-item>
     </el-form>
   </ContentWrap>
@@ -44,35 +48,34 @@
   <!-- 列表 -->
   <ContentWrap>
     <el-table v-loading="loading" :data="list" :stripe="true" :show-overflow-tooltip="true">
-      <el-table-column label="综合判定编号" align="center" prop="code" width="140" fixed="left">
+      <el-table-column label="供应商数据ID" align="center" prop="dataId" width="110" />
+      <el-table-column label="规则名称" align="center" prop="name" min-width="200" />
+      <el-table-column label="所属段" align="center" width="100">
         <template #default="scope">
-          <el-link type="primary" @click="openForm('update', scope.row.id)">
-            {{ scope.row.code }}
-          </el-link>
+          {{ formatSyncSegment(scope.row.segmentCode) }}
         </template>
       </el-table-column>
-      <el-table-column label="名称" align="center" prop="name" min-width="160" />
-      <el-table-column label="包含检测项" align="center" prop="items" min-width="160" />
-      <el-table-column label="判定规则" align="center" prop="rule" min-width="140" />
-      <el-table-column label="描述" align="center" prop="description" min-width="200" />
-      <el-table-column label="操作" align="center" width="140" fixed="right">
+      <el-table-column label="判定方式" align="center" width="120">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            @click="openForm('update', scope.row.id)"
-            v-hasPermi="['lab:comprehensive:update']"
-          >
-            编辑
-          </el-button>
-          <el-button
-            link
-            type="danger"
-            @click="handleDelete(scope.row.id)"
-            v-hasPermi="['lab:comprehensive:delete']"
-          >
-            删除
-          </el-button>
+          {{ getLabComprehensiveModeLabel(scope.row.mode) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="参与检测项目" align="center" min-width="200">
+        <template #default="scope">
+          {{ formatProjectTypes(scope.row.projectTypes) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" align="center" width="80">
+        <template #default="scope">
+          <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">
+            {{ scope.row.status === 1 ? '启用' : '停用' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="更新时间" align="center" prop="dataUpdateTime" width="180" />
+      <el-table-column label="操作" align="center" width="90" fixed="right">
+        <template #default="scope">
+          <el-button link type="primary" @click="openDetail(scope.row.id)">查看</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -85,72 +88,47 @@
     />
   </ContentWrap>
 
-  <!-- 表单弹窗：添加/修改 -->
-  <Dialog :title="dialogTitle" v-model="dialogVisible" width="700px">
-    <el-form
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      label-width="100px"
-      v-loading="formLoading"
-    >
-      <el-row>
-        <el-col :span="12">
-          <el-form-item label="综合判定编号" prop="code">
-            <el-input v-model="formData.code" placeholder="请输入综合判定编号" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="名称" prop="name">
-            <el-input v-model="formData.name" placeholder="请输入名称" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="包含检测项" prop="items">
-            <el-input v-model="formData.items" placeholder="请输入包含检测项" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="判定规则" prop="rule">
-            <el-input v-model="formData.rule" placeholder="请输入判定规则" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="24">
-          <el-form-item label="描述" prop="description">
-            <el-input v-model="formData.description" type="textarea" placeholder="请输入描述" />
-          </el-form-item>
-        </el-col>
-      </el-row>
-    </el-form>
-    <template #footer>
-      <el-button @click="submitForm" type="primary" :disabled="formLoading">确 定</el-button>
-      <el-button @click="dialogVisible = false">取 消</el-button>
-    </template>
-  </Dialog>
+  <!-- 查看详情弹窗（供应商定义，仅查看） -->
+  <el-dialog v-model="detailVisible" :title="detailTitle" width="720px" append-to-body>
+    <el-descriptions :column="2" border>
+      <el-descriptions-item label="所属段">{{ formatSyncSegment(detailData.segmentCode) }}</el-descriptions-item>
+      <el-descriptions-item label="判定方式">{{ getLabComprehensiveModeLabel(detailData.mode) }}</el-descriptions-item>
+      <el-descriptions-item label="规则名称" :span="2">{{ detailData.name }}</el-descriptions-item>
+      <el-descriptions-item label="参与检测项目" :span="2">
+        {{ formatProjectTypes(detailData.projectTypes) }}
+      </el-descriptions-item>
+      <el-descriptions-item label="主检测项目">{{ getLabProjectTypeLabel(detailData.mainProjectType) || '—' }}</el-descriptions-item>
+    </el-descriptions>
+    <el-divider content-position="left">综合判定配置</el-divider>
+    <div class="config-box">
+      <JsonView :value="parseJson(detailData.comprehensiveJson)" context="comprehensive" />
+    </div>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
 import {
-  createComprehensive,
-  deleteComprehensive,
-  getComprehensive,
-  getComprehensivePage,
-  updateComprehensive,
-  ComprehensiveVO
-} from '@/api/lab/comprehensive'
+  getSyncComprehensive,
+  getSyncComprehensivePage,
+  SyncComprehensiveVO,
+  LabComprehensiveModeEnum,
+  getLabComprehensiveModeLabel,
+  getLabProjectTypeLabel,
+  formatSyncSegment
+} from '@/api/lab/sync'
+import { LabSectionEnum } from '@/api/lab/resource'
+import JsonView from '@/views/lab/basedata/sync/components/JsonView.vue'
 
 defineOptions({ name: 'LabBasedataComprehensive' })
 
-const message = useMessage() // 消息弹窗
-const { t } = useI18n() // 国际化
-
 const loading = ref(true) // 列表的加载中
-const list = ref<ComprehensiveVO[]>([]) // 列表的数据
+const list = ref<SyncComprehensiveVO[]>([]) // 列表的数据
 const total = ref(0) // 列表的总数
 const queryParams = reactive({
   pageNo: 1,
   pageSize: 10,
-  code: undefined,
+  segmentCode: undefined,
+  mode: undefined,
   name: undefined
 })
 const queryFormRef = ref() // 搜索的表单
@@ -159,7 +137,7 @@ const queryFormRef = ref() // 搜索的表单
 const getList = async () => {
   loading.value = true
   try {
-    const data = await getComprehensivePage(queryParams)
+    const data = await getSyncComprehensivePage(queryParams)
     list.value = data.list
     total.value = data.total
   } finally {
@@ -179,89 +157,41 @@ const resetQuery = () => {
   handleQuery()
 }
 
-/** 添加/修改操作 */
-const dialogVisible = ref(false) // 弹窗的是否展示
-const dialogTitle = ref('') // 弹窗的标题
-const formLoading = ref(false) // 表单的加载中：1）修改时的数据加载；2）提交的按钮禁用
-const formType = ref('') // 表单的类型：create - 新增；update - 修改
-const formData = ref({
-  id: undefined,
-  code: undefined,
-  name: undefined,
-  items: undefined,
-  rule: undefined,
-  description: undefined
-})
-const formRules = reactive({
-  code: [{ required: true, message: '综合判定编号不能为空', trigger: 'blur' }],
-  name: [{ required: true, message: '名称不能为空', trigger: 'blur' }]
-})
-const formRef = ref() // 表单 Ref
-
-/** 打开弹窗 */
-const openForm = async (type: string, id?: number) => {
-  dialogVisible.value = true
-  dialogTitle.value = type === 'create' ? '新增综合判定' : '修改综合判定'
-  formType.value = type
-  resetForm()
-  // 修改时，设置数据
-  if (id) {
-    formLoading.value = true
-    try {
-      formData.value = await getComprehensive(id)
-    } finally {
-      formLoading.value = false
-    }
+/** 参与检测项目（逗号分隔的编号转中文） */
+const formatProjectTypes = (types?: string) => {
+  if (!types) {
+    return '—'
   }
+  return types
+    .split(',')
+    .map((t) => getLabProjectTypeLabel(Number(t)))
+    .filter(Boolean)
+    .join('、')
 }
 
-/** 提交表单 */
-const submitForm = async () => {
-  // 校验表单
-  await formRef.value.validate()
-  // 提交请求
-  formLoading.value = true
+// ==================== 查看详情 ====================
+const detailVisible = ref(false) // 弹窗的是否展示
+const detailTitle = ref('') // 弹窗的标题
+const detailData = ref<SyncComprehensiveVO>({} as SyncComprehensiveVO) // 详情数据
+
+/** 打开详情弹窗 */
+const openDetail = async (id: number) => {
+  detailVisible.value = true
+  const data = await getSyncComprehensive(id)
+  detailData.value = data
+  detailTitle.value = '综合判定 · ' + data.name
+}
+
+/** 解析 JSON 字符串 */
+const parseJson = (json?: string) => {
+  if (!json) {
+    return {}
+  }
   try {
-    const data = formData.value as unknown as ComprehensiveVO
-    if (formType.value === 'create') {
-      await createComprehensive(data)
-      message.success(t('common.createSuccess'))
-    } else {
-      await updateComprehensive(data)
-      message.success(t('common.updateSuccess'))
-    }
-    dialogVisible.value = false
-    // 刷新列表
-    await getList()
-  } finally {
-    formLoading.value = false
+    return JSON.parse(json)
+  } catch {
+    return {}
   }
-}
-
-/** 重置表单 */
-const resetForm = () => {
-  formData.value = {
-    id: undefined,
-    code: undefined,
-    name: undefined,
-    items: undefined,
-    rule: undefined,
-    description: undefined
-  }
-  formRef.value?.resetFields()
-}
-
-/** 删除按钮操作 */
-const handleDelete = async (id: number) => {
-  try {
-    // 删除的二次确认
-    await message.delConfirm()
-    // 发起删除
-    await deleteComprehensive(id)
-    message.success(t('common.delSuccess'))
-    // 刷新列表
-    await getList()
-  } catch {}
 }
 
 /** 初始化 **/
@@ -269,3 +199,14 @@ onMounted(() => {
   getList()
 })
 </script>
+
+<style scoped>
+.config-box {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 4px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--bg-card);
+}
+</style>

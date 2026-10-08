@@ -35,3 +35,8 @@ export const getProcess = async (id) => {
 export const getProcessPage = async (query) => {
   return request.get({ url: '/lab/process/page', params: query })
 }
+
+// 获得指定工段下的工序列表
+export const getProcessListBySection = async (secCode: string) => {
+  return request.get({ url: '/lab/process/list-by-section', params: { secCode } })
+}

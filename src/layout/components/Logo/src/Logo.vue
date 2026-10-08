@@ -71,18 +71,14 @@ watch(
       ]"
       to="/"
     >
-      <div
-        class="cyber-logo-box h-[calc(var(--logo-height)-10px)] w-[calc(var(--logo-height)-10px)]"
-      >
-        <img
-          class="h-[calc(var(--logo-height)-18px)] w-[calc(var(--logo-height)-18px)]"
-          src="@/assets/imgs/logo.png"
-        />
-      </div>
+      <img
+        class="h-[calc(var(--logo-height)-10px)] w-[calc(var(--logo-height)-10px)]"
+        src="@/assets/imgs/logo.png"
+      />
       <div
         v-if="show"
         :class="[
-          'ml-10px text-16px font-700 cyber-logo-text',
+          'ml-10px text-16px font-700',
           {
             'text-[var(--logo-title-text-color)]': getLayoutRenderMode(layout) === 'classic',
             'text-[var(--top-header-text-color)]':
@@ -97,22 +93,3 @@ watch(
     </router-link>
   </div>
 </template>
-
-<style lang="scss" scoped>
-.cyber-logo-box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  background: var(--gradient-primary);
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
-  flex-shrink: 0;
-}
-
-.cyber-logo-text {
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-</style>

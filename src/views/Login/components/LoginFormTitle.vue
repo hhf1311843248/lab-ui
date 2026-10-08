@@ -1,7 +1,7 @@
 <template>
-  <h2 class="glow-text enter-x mb-3 text-center text-2xl font-bold xl:text-center xl:text-3xl">
-    {{ getFormTitle }}
-  </h2>
+  <div v-if="getFormTitle" class="enter-x mb-6">
+    <h2 class="text-24px font-bold">{{ getFormTitle }}</h2>
+  </div>
 </template>
 <script lang="ts" setup>
 import { LoginStateEnum, useLoginState } from './useLogin'
@@ -13,9 +13,12 @@ const { t } = useI18n()
 const { getLoginState } = useLoginState()
 
 const getFormTitle = computed(() => {
+  // 账号登录态：标题由登录页外部展示，此处留空
+  if (unref(getLoginState) === LoginStateEnum.LOGIN) {
+    return ''
+  }
   const titleObj = {
     [LoginStateEnum.RESET_PASSWORD]: t('sys.login.forgetFormTitle'),
-    [LoginStateEnum.LOGIN]: t('sys.login.signInFormTitle'),
     [LoginStateEnum.REGISTER]: t('sys.login.signUpFormTitle'),
     [LoginStateEnum.MOBILE]: t('sys.login.mobileSignInFormTitle'),
     [LoginStateEnum.QR_CODE]: t('sys.login.qrSignInFormTitle'),

@@ -15,6 +15,7 @@ export interface RouteVO {
   name: string
   sec?: string
   steps: RouteStepVO[]
+  stepCount?: number
   createTime?: Date
 }
 

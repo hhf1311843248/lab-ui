@@ -37,6 +37,11 @@ export const getTenantByWebsite = (website: string) => {
   return request.get({ url: '/system/tenant/get-by-website?website=' + website })
 }
 
+// 获得租户（组织/厂区）列表
+export const getTenantList = () => {
+  return request.get({ url: '/system/tenant/simple-list' })
+}
+
 // 登出
 export const loginOut = () => {
   return request.post({ url: '/system/auth/logout' })

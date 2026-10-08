@@ -1,4 +1,4 @@
-<!-- 实验策划-工艺路线 -->
+<!-- 基础数据-工艺路线维护 -->
 <template>
   <ContentWrap>
     <!-- 搜索工作栏 -->
@@ -28,13 +28,14 @@
         />
       </el-form-item>
       <el-form-item label="所属工段" prop="sec">
-        <el-input
-          v-model="queryParams.sec"
-          placeholder="请输入所属工段"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
+        <el-select v-model="queryParams.sec" placeholder="请选择所属工段" clearable class="!w-240px">
+          <el-option
+            v-for="item in LabSectionEnum"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
@@ -56,22 +57,25 @@
     <el-table v-loading="loading" :data="list" :stripe="true" :show-overflow-tooltip="true">
       <el-table-column label="工艺路线编号" align="center" prop="code" min-width="160">
         <template #default="scope">
-          <el-button link type="primary" @click="openForm('update', scope.row.id)">
+          <el-button link type="primary" @click="openDetail(scope.row)">
             {{ scope.row.code }}
           </el-button>
         </template>
       </el-table-column>
       <el-table-column label="工艺路线描述" align="center" prop="name" min-width="200" />
-      <el-table-column label="所属工段" align="center" prop="sec" min-width="120" />
-      <el-table-column
-        label="创建时间"
-        align="center"
-        prop="createTime"
-        :formatter="dateFormatter"
-        width="180px"
-      />
-      <el-table-column label="操作" align="center" width="160" fixed="right">
+      <el-table-column label="所属工段" align="center" width="120">
         <template #default="scope">
+          {{ getLabSectionName(scope.row.sec) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="工序数" align="center" prop="stepCount" width="90">
+        <template #default="scope">
+          <span class="num">{{ scope.row.stepCount ?? 0 }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center" width="190" fixed="right">
+        <template #default="scope">
+          <el-button link type="primary" @click="openDetail(scope.row)">明细</el-button>
           <el-button
             link
             type="primary"
@@ -100,6 +104,21 @@
     />
   </ContentWrap>
 
+  <!-- 明细弹窗 -->
+  <el-dialog v-model="detailVisible" :title="detailTitle" width="620px" append-to-body>
+    <el-descriptions :column="2" border>
+      <el-descriptions-item label="工艺路线编号">{{ detailData.code }}</el-descriptions-item>
+      <el-descriptions-item label="所属工段">{{ getLabSectionName(detailData.sec) }}</el-descriptions-item>
+      <el-descriptions-item label="工艺路线描述" :span="2">{{ detailData.name }}</el-descriptions-item>
+    </el-descriptions>
+    <el-divider content-position="left">工序明细（{{ detailData.steps?.length ?? 0 }}）</el-divider>
+    <el-table :data="detailData.steps || []" border>
+      <el-table-column label="序号" prop="seq" align="center" width="80" />
+      <el-table-column label="工序编号" prop="procCode" />
+      <el-table-column label="工序描述" prop="procName" />
+    </el-table>
+  </el-dialog>
+
   <!-- 表单弹窗：新增/修改 -->
   <el-dialog v-model="dialogVisible" :title="dialogTitle" width="800px" append-to-body>
     <el-form
@@ -111,47 +130,69 @@
     >
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="编号" prop="code">
+          <el-form-item label="工艺路线编号" prop="code">
             <el-input v-model="formData.code" placeholder="请输入工艺路线编号" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="描述" prop="name">
+          <el-form-item label="工艺路线描述" prop="name">
             <el-input v-model="formData.name" placeholder="请输入工艺路线描述" />
           </el-form-item>
         </el-col>
       </el-row>
       <el-form-item label="所属工段" prop="sec">
-        <el-input v-model="formData.sec" placeholder="请输入所属工段" />
+        <el-select
+          v-model="formData.sec"
+          placeholder="请选择所属工段"
+          clearable
+          class="!w-300px"
+          @change="handleSectionChange"
+        >
+          <el-option
+            v-for="item in LabSectionEnum"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
       </el-form-item>
 
       <!-- 工序明细子表 -->
       <el-divider content-position="left">工序明细</el-divider>
       <el-table :data="formData.steps" border>
-        <el-table-column label="明细序号" type="index" align="center" width="80" />
-        <el-table-column label="序号" prop="seq" min-width="80">
-          <template #default="{ row, $index }">
-            <el-form-item :prop="`steps.${$index}.seq`" :rules="formRules.seq" class="mb-0px!">
-              <el-input-number v-model="row.seq" :min="0" controls-position="right" class="!w-100%" />
-            </el-form-item>
+        <el-table-column label="序号" prop="seq" align="center" width="90">
+          <template #default="{ row }">
+            <el-input v-model="row.seq" disabled />
           </template>
         </el-table-column>
-        <el-table-column label="工序编号" prop="procCode" min-width="140">
+        <el-table-column label="工序编号" prop="procCode" min-width="200">
           <template #default="{ row, $index }">
             <el-form-item
               :prop="`steps.${$index}.procCode`"
               :rules="formRules.procCode"
               class="mb-0px!"
             >
-              <el-input v-model="row.procCode" placeholder="请输入工序编号" />
+              <el-select
+                v-model="row.procCode"
+                placeholder="请选择工序"
+                filterable
+                class="!w-100%"
+                :disabled="!formData.sec"
+                @change="handleProcessChange(row)"
+              >
+                <el-option
+                  v-for="item in processOptions"
+                  :key="item.procCode"
+                  :label="`${item.procCode} | ${item.procName}`"
+                  :value="item.procCode"
+                />
+              </el-select>
             </el-form-item>
           </template>
         </el-table-column>
-        <el-table-column label="工序描述" prop="procName" min-width="160">
+        <el-table-column label="工序描述" prop="procName" min-width="180">
           <template #default="{ row }">
-            <el-form-item class="mb-0px!">
-              <el-input v-model="row.procName" placeholder="请输入工序描述" />
-            </el-form-item>
+            <el-input v-model="row.procName" disabled placeholder="选择工序后自动填充" />
           </template>
         </el-table-column>
         <el-table-column align="center" label="操作" width="60">
@@ -161,7 +202,7 @@
         </el-table-column>
       </el-table>
       <el-button type="primary" plain class="mt-2" @click="handleAddStep">
-        <Icon icon="ep:plus" class="mr-5px" /> 新增工序
+        <Icon icon="ep:plus" class="mr-5px" /> 添加工序
       </el-button>
     </el-form>
     <template #footer>
@@ -172,7 +213,6 @@
 </template>
 
 <script setup lang="ts">
-import { dateFormatter } from '@/utils/formatTime'
 import {
   createRoute,
   deleteRoute,
@@ -182,8 +222,10 @@ import {
   RouteVO,
   updateRoute
 } from '@/api/lab/route'
+import { LabSectionEnum, getLabSectionName } from '@/api/lab/resource'
+import { getProcessListBySection, ProcessVO } from '@/api/lab/process'
 
-defineOptions({ name: 'LabPlanRoute' })
+defineOptions({ name: 'LabRoute' })
 
 const message = useMessage() // 消息弹窗
 const { t } = useI18n() // 国际化
@@ -234,25 +276,61 @@ const handleDelete = async (id: number) => {
   } catch {}
 }
 
+// ==================== 明细弹窗 ====================
+const detailVisible = ref(false) // 明细弹窗是否展示
+const detailTitle = ref('') // 明细弹窗标题
+const detailData = ref<RouteVO>({ code: '', name: '', steps: [] }) // 明细数据
+
+/** 打开明细弹窗：展示主数据 + 工序明细 */
+const openDetail = async (row: RouteVO) => {
+  detailVisible.value = true
+  detailTitle.value = '工艺路线 · ' + row.code
+  const data = await getRoute(row.id)
+  detailData.value = data
+  if (!detailData.value.steps) {
+    detailData.value.steps = []
+  }
+}
+
 // ==================== 表单弹窗 ====================
 const dialogVisible = ref(false) // 弹窗的是否展示
 const dialogTitle = ref('') // 弹窗的标题
 const formLoading = ref(false) // 表单的加载中
 const formType = ref('') // 表单的类型：create - 新增；update - 修改
 const formRef = ref() // 表单 Ref
+const processOptions = ref<ProcessVO[]>([]) // 当前工段下的工序列表（工序编号下拉）
 const formData = ref({
   id: undefined,
   code: '',
   name: '',
-  sec: '',
+  sec: undefined,
   steps: [] as RouteStepVO[]
 })
 const formRules = reactive({
   code: [{ required: true, message: '工艺路线编号不能为空', trigger: 'blur' }],
   name: [{ required: true, message: '工艺路线描述不能为空', trigger: 'blur' }],
-  seq: [{ required: true, message: '序号不能为空', trigger: 'blur' }],
-  procCode: [{ required: true, message: '工序编号不能为空', trigger: 'blur' }]
+  procCode: [{ required: true, message: '请选择工序', trigger: 'change' }]
 })
+
+/**
+ * 工段变更：通过工段 Code 调后端工序接口，加载工序下拉；未选工段前工序下拉为空
+ * @param preserveSteps 是否保留已录入的工序明细（编辑回显时使用）
+ */
+const handleSectionChange = async (preserveSteps = false) => {
+  processOptions.value = []
+  if (!preserveSteps) {
+    formData.value.steps = []
+  }
+  if (formData.value.sec) {
+    processOptions.value = await getProcessListBySection(formData.value.sec)
+  }
+}
+
+/** 选择工序后，自动填充工序描述 */
+const handleProcessChange = (row: RouteStepVO) => {
+  const proc = processOptions.value.find((item) => item.procCode === row.procCode)
+  row.procName = proc?.procName ?? ''
+}
 
 /** 打开弹窗 */
 const openForm = async (type: string, id?: number) => {
@@ -269,20 +347,25 @@ const openForm = async (type: string, id?: number) => {
       if (!formData.value.steps) {
         formData.value.steps = []
       }
+      // 编辑时加载对应工段的工序，并保留原工序明细用于回显
+      await handleSectionChange(true)
     } finally {
       formLoading.value = false
     }
   }
 }
 
-/** 新增工序 */
+/** 新增工序：序号自动按行递增 */
 const handleAddStep = () => {
-  formData.value.steps.push({ seq: undefined, procCode: '', procName: '' })
+  formData.value.steps.push({ seq: formData.value.steps.length + 1, procCode: '', procName: '' })
 }
 
-/** 删除工序 */
+/** 删除工序：删除后序号重新排列 */
 const handleDeleteStep = (index: number) => {
   formData.value.steps.splice(index, 1)
+  formData.value.steps.forEach((step, i) => {
+    step.seq = i + 1
+  })
 }
 
 /** 提交表单 */
@@ -311,9 +394,10 @@ const resetForm = () => {
     id: undefined,
     code: '',
     name: '',
-    sec: '',
+    sec: undefined,
     steps: []
   }
+  processOptions.value = []
   formRef.value?.resetFields()
 }
 

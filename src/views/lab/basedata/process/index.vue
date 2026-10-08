@@ -106,16 +106,6 @@
     >
       <el-row>
         <el-col :span="12">
-          <el-form-item label="工段编号" prop="secCode">
-            <el-input v-model="formData.secCode" placeholder="请输入工段编号" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="工段描述" prop="secName">
-            <el-input v-model="formData.secName" placeholder="请输入工段描述" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
           <el-form-item label="工序编号" prop="procCode">
             <el-input v-model="formData.procCode" placeholder="请输入工序编号" />
           </el-form-item>
@@ -126,13 +116,43 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
+          <el-form-item label="工段" prop="secCode">
+            <el-select
+              v-model="formData.secCode"
+              placeholder="请选择工段"
+              class="!w-1/1"
+              @change="handleSectionChange"
+            >
+              <el-option
+                v-for="item in LabSectionEnum"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
           <el-form-item label="标准节拍" prop="takt">
             <el-input-number v-model="formData.takt" :min="0" :precision="2" class="!w-1/1" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="默认资源" prop="resName">
-            <el-input v-model="formData.resName" placeholder="请输入默认资源" />
+            <el-select
+              v-model="formData.resName"
+              placeholder="请选择默认资源"
+              clearable
+              class="!w-1/1"
+              :disabled="!formData.secCode"
+            >
+              <el-option
+                v-for="item in resourceOptions"
+                :key="item.id"
+                :label="item.name"
+                :value="item.name"
+              />
+            </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -167,6 +187,11 @@ import {
   updateProcess,
   ProcessVO
 } from '@/api/lab/process'
+import {
+  LabSectionEnum,
+  getResourceListBySection,
+  ResourceVO
+} from '@/api/lab/resource'
 import { CommonStatusEnum } from '@/utils/constants'
 
 defineOptions({ name: 'LabBasedataProcess' })
@@ -215,10 +240,10 @@ const dialogVisible = ref(false) // 弹窗的是否展示
 const dialogTitle = ref('') // 弹窗的标题
 const formLoading = ref(false) // 表单的加载中：1）修改时的数据加载；2）提交的按钮禁用
 const formType = ref('') // 表单的类型：create - 新增；update - 修改
+const resourceOptions = ref<ResourceVO[]>([]) // 默认资源下拉的可选资源（按工段加载）
 const formData = ref({
   id: undefined,
   secCode: undefined,
-  secName: undefined,
   procCode: undefined,
   procName: undefined,
   takt: undefined,
@@ -226,12 +251,26 @@ const formData = ref({
   status: CommonStatusEnum.ENABLE
 })
 const formRules = reactive({
-  secCode: [{ required: true, message: '工段编号不能为空', trigger: 'blur' }],
+  secCode: [{ required: true, message: '请选择工段', trigger: 'blur' }],
   procCode: [{ required: true, message: '工序编号不能为空', trigger: 'blur' }],
   procName: [{ required: true, message: '工序描述不能为空', trigger: 'blur' }],
   status: [{ required: true, message: '状态不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+
+/**
+ * 工段变更：通过工段 Code 调后端资源接口，加载对应工段的默认资源下拉
+ * @param preserveResName 是否保留已选择的默认资源（编辑回显时使用）
+ */
+const handleSectionChange = async (preserveResName = false) => {
+  resourceOptions.value = []
+  if (!preserveResName) {
+    formData.value.resName = undefined
+  }
+  if (formData.value.secCode) {
+    resourceOptions.value = await getResourceListBySection(formData.value.secCode)
+  }
+}
 
 /** 打开弹窗 */
 const openForm = async (type: string, id?: number) => {
@@ -244,6 +283,8 @@ const openForm = async (type: string, id?: number) => {
     formLoading.value = true
     try {
       formData.value = await getProcess(id)
+      // 编辑时加载对应工段的资源，并保留原默认资源用于回显
+      await handleSectionChange(true)
     } finally {
       formLoading.value = false
     }
@@ -278,13 +319,13 @@ const resetForm = () => {
   formData.value = {
     id: undefined,
     secCode: undefined,
-    secName: undefined,
     procCode: undefined,
     procName: undefined,
     takt: undefined,
     resName: undefined,
     status: CommonStatusEnum.ENABLE
   }
+  resourceOptions.value = []
   formRef.value?.resetFields()
 }
 

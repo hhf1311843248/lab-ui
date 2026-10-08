@@ -28,9 +28,12 @@
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable class="!w-240px">
-          <el-option label="运行中" value="运行中" />
-          <el-option label="空闲" value="空闲" />
-          <el-option label="维保" value="维保" />
+          <el-option
+            v-for="item in LabResourceStatusEnum"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -60,14 +63,18 @@
       </el-table-column>
       <el-table-column label="资源名称" align="center" prop="name" min-width="140" />
       <el-table-column label="资源类型" align="center" prop="type" width="100" />
-      <el-table-column label="所属工段" align="center" prop="section" width="120" />
+      <el-table-column label="所属工段" align="center" width="120">
+        <template #default="scope">
+          {{ getLabSectionName(scope.row.sectionCode) }}
+        </template>
+      </el-table-column>
       <el-table-column label="班次" align="center" prop="shift" width="120" />
       <el-table-column label="状态" align="center" prop="status" width="100">
         <template #default="scope">
           <el-tag
-            :type="scope.row.status === '运行中' ? 'success' : scope.row.status === '空闲' ? 'primary' : 'warning'"
+            :type="scope.row.status === 0 ? 'success' : scope.row.status === 1 ? 'primary' : 'warning'"
           >
-            {{ scope.row.status }}
+            {{ getLabResourceStatusLabel(scope.row.status) }}
           </el-tag>
         </template>
       </el-table-column>
@@ -127,8 +134,19 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="所属工段" prop="section">
-            <el-input v-model="formData.section" placeholder="请输入所属工段" />
+          <el-form-item label="所属工段" prop="sectionCode">
+            <el-select
+              v-model="formData.sectionCode"
+              placeholder="请选择所属工段"
+              class="!w-1/1"
+            >
+              <el-option
+                v-for="item in LabSectionEnum"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -139,9 +157,12 @@
         <el-col :span="12">
           <el-form-item label="状态" prop="status">
             <el-select v-model="formData.status" placeholder="请选择状态" class="!w-1/1">
-              <el-option label="运行中" value="运行中" />
-              <el-option label="空闲" value="空闲" />
-              <el-option label="维保" value="维保" />
+              <el-option
+                v-for="item in LabResourceStatusEnum"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
             </el-select>
           </el-form-item>
         </el-col>
@@ -161,6 +182,10 @@ import {
   getResource,
   getResourcePage,
   updateResource,
+  LabSectionEnum,
+  LabResourceStatusEnum,
+  getLabSectionName,
+  getLabResourceStatusLabel,
   ResourceVO
 } from '@/api/lab/resource'
 
@@ -215,13 +240,14 @@ const formData = ref({
   code: undefined,
   name: undefined,
   type: undefined,
-  section: undefined,
+  sectionCode: undefined,
   shift: undefined,
-  status: '空闲'
+  status: 1 // 空闲
 })
 const formRules = reactive({
   code: [{ required: true, message: '资源编号不能为空', trigger: 'blur' }],
   name: [{ required: true, message: '资源名称不能为空', trigger: 'blur' }],
+  sectionCode: [{ required: true, message: '请选择所属工段', trigger: 'blur' }],
   status: [{ required: true, message: '状态不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
@@ -273,9 +299,9 @@ const resetForm = () => {
     code: undefined,
     name: undefined,
     type: undefined,
-    section: undefined,
+    sectionCode: undefined,
     shift: undefined,
-    status: '空闲'
+    status: 1 // 空闲
   }
   formRef.value?.resetFields()
 }

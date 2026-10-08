@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { useAppStore } from '@/store/modules/app'
 import { useDesign } from '@/hooks/web/useDesign'
+import { CACHE_KEY, useCache } from '@/hooks/web/useCache'
 import routerSearch from '@/components/RouterSearch/index.vue'
 
 defineOptions({ name: 'APP' })
@@ -11,25 +12,12 @@ const appStore = useAppStore()
 const currentSize = computed(() => appStore.getCurrentSize)
 const greyMode = computed(() => appStore.getGreyMode)
 
-// 锁定深色赛博主题：强制暗黑模式，并覆写可能存在的旧缓存为主题色
+// 应用深/浅主题：默认深色赛博，若用户切换过浅色则按缓存保持，并覆写可能存在的旧缓存为主题预设
 const setDefaultTheme = () => {
-  appStore.setIsDark(true)
-  appStore.setTheme({
-    elColorPrimary: '#00f0ff',
-    leftMenuBorderColor: 'rgba(0, 240, 255, 0.15)',
-    leftMenuBgColor: 'rgba(10, 14, 26, 0.95)',
-    leftMenuBgLightColor: 'transparent',
-    leftMenuBgActiveColor: 'transparent',
-    leftMenuCollapseBgActiveColor: 'transparent',
-    leftMenuTextColor: '#94a3b8',
-    leftMenuTextActiveColor: '#00f0ff',
-    logoTitleTextColor: '#fff',
-    logoBorderColor: 'rgba(0, 240, 255, 0.15)',
-    topHeaderBgColor: 'rgba(10, 14, 26, 0.6)',
-    topHeaderTextColor: '#e2e8f0',
-    topHeaderHoverColor: 'rgba(0, 240, 255, 0.08)',
-    topToolBorderColor: 'rgba(0, 240, 255, 0.15)'
-  })
+  const { wsCache } = useCache()
+  const isDark = wsCache.get(CACHE_KEY.IS_DARK) ?? true
+  appStore.setIsDark(isDark)
+  appStore.applyThemePreset(isDark)
 }
 setDefaultTheme()
 </script>

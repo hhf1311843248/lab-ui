@@ -72,7 +72,7 @@
         :formatter="dateFormatter"
         width="170px"
       />
-      <el-table-column label="操作" align="center" width="160" fixed="right">
+      <el-table-column label="操作" align="center" width="140" fixed="right">
         <template #default="scope">
           <el-button
             link
@@ -83,12 +83,13 @@
             编辑
           </el-button>
           <el-button
+            v-if="scope.row.status === '新建'"
             link
-            type="danger"
-            @click="handleDelete(scope.row.id)"
-            v-hasPermi="['lab:task-group:delete']"
+            type="primary"
+            @click="handleRelease(scope.row)"
+            v-hasPermi="['lab:task-group:update']"
           >
-            删除
+            下达
           </el-button>
         </template>
       </el-table-column>
@@ -163,21 +164,35 @@
       <el-divider content-position="left">配方关联</el-divider>
       <el-table :data="formData.linkList" border>
         <el-table-column label="明细序号" type="index" align="center" width="60" />
-        <el-table-column label="配方编号" prop="formulaCode" min-width="180">
+        <el-table-column label="配方编号" prop="formulaCode" min-width="260">
           <template #default="{ row, $index }">
             <el-form-item
               :prop="`linkList.${$index}.formulaCode`"
               :rules="formRules.formulaCode"
               class="mb-0px!"
             >
-              <el-input v-model="row.formulaCode" placeholder="请输入配方编号" />
+              <el-select
+                v-model="row.formulaCode"
+                placeholder="请选择已下达的配方"
+                filterable
+                clearable
+                class="!w-100%"
+                @change="handleFormulaChange(row, $event)"
+              >
+                <el-option
+                  v-for="f in formulaOptions"
+                  :key="f.id"
+                  :label="`${f.code}｜${f.section || ''}｜${f.description || ''}`"
+                  :value="f.code"
+                />
+              </el-select>
             </el-form-item>
           </template>
         </el-table-column>
-        <el-table-column label="负极配方" prop="negFormula" min-width="160">
+        <el-table-column label="配方描述" prop="negFormula" min-width="200">
           <template #default="{ row }">
             <el-form-item class="mb-0px!">
-              <el-input v-model="row.negFormula" placeholder="请输入负极配方" />
+              <el-input v-model="row.negFormula" placeholder="选择配方后自动带出" disabled />
             </el-form-item>
           </template>
         </el-table-column>
@@ -200,11 +215,12 @@
 
 <script setup lang="ts">
 import { dateFormatter } from '@/utils/formatTime'
+import { getReleasedFormulaList, FormulaSimpleVO } from '@/api/lab/formula'
 import {
   createTaskGroup,
-  deleteTaskGroup,
   getTaskGroup,
   getTaskGroupPage,
+  releaseTaskGroup,
   TaskGroupLinkVO,
   TaskGroupVO,
   updateTaskGroup
@@ -253,12 +269,24 @@ const resetQuery = () => {
   handleQuery()
 }
 
-/** 删除按钮操作 */
-const handleDelete = async (id: number) => {
+/** 已下达状态的配方下拉数据源 */
+const formulaOptions = ref<FormulaSimpleVO[]>([])
+const getFormulaOptions = async () => {
+  formulaOptions.value = await getReleasedFormulaList()
+}
+
+/** 选择配方后自动带出配方描述 */
+const handleFormulaChange = (row: TaskGroupLinkVO, code?: string) => {
+  const formula = formulaOptions.value.find((f) => f.code === code)
+  row.negFormula = formula?.description ?? ''
+}
+
+/** 下达按钮操作：新建 → 已下达 */
+const handleRelease = async (row: TaskGroupVO) => {
   try {
-    await message.delConfirm()
-    await deleteTaskGroup(id)
-    message.success(t('common.delSuccess'))
+    await message.confirm(`确认下达实验任务组「${row.code}」？`)
+    await releaseTaskGroup(row.id)
+    message.success('下达成功')
     await getList()
   } catch {}
 }
@@ -276,7 +304,7 @@ const formData = ref({
   prio: '',
   planStart: '',
   planEnd: '',
-  status: '',
+  status: '新建',
   linkList: [] as TaskGroupLinkVO[]
 })
 const formRules = reactive({
@@ -344,7 +372,7 @@ const resetForm = () => {
     prio: '',
     planStart: '',
     planEnd: '',
-    status: '',
+    status: '新建',
     linkList: []
   }
   formRef.value?.resetFields()
@@ -353,5 +381,6 @@ const resetForm = () => {
 /** 初始化 */
 onMounted(() => {
   getList()
+  getFormulaOptions()
 })
 </script>

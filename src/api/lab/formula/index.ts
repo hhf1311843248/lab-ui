@@ -44,10 +44,19 @@ export interface FormulaVO {
   atk2?: string
   factor?: string
   purpose?: string
-  status?: string
+  description?: string
+  status?: number
   feedList: FormulaFeedVO[]
   schemeList: FormulaSchemeVO[]
   createTime?: Date
+}
+
+/** 配方简单信息（下拉选择用） */
+export interface FormulaSimpleVO {
+  id: number
+  code: string
+  section?: string
+  description?: string
 }
 
 // 创建配方
@@ -65,12 +74,32 @@ export const deleteFormula = async (id) => {
   return await request.delete({ url: '/lab/formula/delete?id=' + id, method: 'delete' })
 }
 
+// 提交评审：新建 → 评审中
+export const submitReviewFormula = async (id) => {
+  return await request.post({ url: '/lab/formula/submit-review?id=' + id })
+}
+
+// 下达：评审中 → 已下达
+export const releaseFormula = async (id) => {
+  return await request.post({ url: '/lab/formula/release?id=' + id })
+}
+
+// 取消：新建/评审中/已下达 → 取消
+export const cancelFormula = async (id) => {
+  return await request.post({ url: '/lab/formula/cancel?id=' + id })
+}
+
 // 获得配方
 export const getFormula = async (id) => {
   return await request.get({ url: '/lab/formula/get?id=' + id })
 }
 
 // 获得配方分页
-export const getFormulaPage = async (query) => {
-  return await request.get({ url: '/lab/formula/page', params: query })
+export const getFormulaPage = async (params) => {
+  return await request.get({ url: '/lab/formula/page', params })
+}
+
+// 获得已下达状态的配方简单列表（下拉选择用）
+export const getReleasedFormulaList = async () => {
+  return await request.get({ url: '/lab/formula/list-released' })
 }

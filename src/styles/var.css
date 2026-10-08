@@ -59,6 +59,10 @@
   --app-content-bg-color: var(--el-bg-color);
 }
 
+.light {
+  --app-content-bg-color: #f7f8fa;
+}
+
 html,
 body {
   -webkit-font-smoothing: antialiased;

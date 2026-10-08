@@ -688,3 +688,200 @@ onUnmounted(() => timer && clearInterval(timer))
   .gauge-grid { grid-template-columns: repeat(3, 1fr); }
 }
 </style>
+
+<!-- ============================================================
+     浅色主题：严格参照 lab/dashboard.html 的暖橙实验室风（非 scoped，按 html.light 生效）
+     ============================================================ -->
+<style lang="scss">
+html.light .tech-home {
+  --primary: #f4a261;
+  --primary-2: #f7c59b;
+  --primary-3: #fff1e7;
+  --bg: #f7f8fa;
+  --card: #ffffff;
+  --text: #28323c;
+  --muted: #7b8794;
+  --line: #e8ebef;
+  --success: #39a96b;
+  --success-bg: #eaf7f0;
+  --warn: #efaf3b;
+  --warn-bg: #fff7e6;
+  --blue: #5a82e6;
+  --blue-bg: #edf3ff;
+  --danger: #d95c5c;
+  --danger-bg: #fff0f0;
+  background: linear-gradient(180deg, #fff 0%, #faf8f5 40%, var(--bg) 100%);
+}
+
+html.light .tech-home .showcase-live {
+  background: #fff;
+  color: var(--muted);
+  border-color: var(--line);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+html.light .tech-home .showcase-title {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--text);
+}
+
+html.light .tech-home .hero-stage {
+  background: linear-gradient(135deg, #fff 0%, #fffcf8 50%, #f5f8ff 100%);
+  border-color: var(--line);
+  box-shadow: 0 12px 40px rgba(40, 50, 60, 0.06);
+}
+
+html.light .tech-home .hero-grid-bg {
+  opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(244, 162, 97, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(244, 162, 97, 0.08) 1px, transparent 1px);
+}
+
+html.light .tech-home .hero-corner {
+  color: #b0b8c0;
+}
+
+html.light .tech-home .hero-center-badge {
+  background: rgba(244, 162, 97, 0.06);
+  border: 1px solid rgba(244, 162, 97, 0.18);
+  color: #b87a3a;
+}
+
+/* SVG 节点（dashboard.html：白底节点、浅色描边药丸） */
+html.light .tech-home .node-circle-outer {
+  fill: #fff;
+}
+html.light .tech-home .node-label {
+  fill: var(--text);
+}
+html.light .tech-home .node-sublabel {
+  fill: var(--muted);
+}
+html.light .tech-home .node-stat-pill {
+  fill: #fff;
+}
+html.light .tech-home .node-stat-pill.orange {
+  stroke: #f4a261;
+  fill: #fff8f2;
+}
+html.light .tech-home .node-stat-pill.blue {
+  stroke: #5a82e6;
+  fill: #f3f6ff;
+}
+html.light .tech-home .node-stat-pill.green {
+  stroke: #39a96b;
+  fill: #f0faf4;
+}
+html.light .tech-home .node-stat-pill.purple {
+  stroke: #9b7fe6;
+  fill: #f7f4ff;
+}
+html.light .tech-home .node-stat-text.orange {
+  fill: #c47a30;
+}
+html.light .tech-home .node-stat-text.blue {
+  fill: #4568c4;
+}
+html.light .tech-home .node-stat-text.green {
+  fill: #2d8555;
+}
+html.light .tech-home .node-stat-text.purple {
+  fill: #7a62c8;
+}
+
+html.light .tech-home .flow-path.orange {
+  stroke: rgba(244, 162, 97, 0.45);
+}
+html.light .tech-home .flow-path.blue {
+  stroke: rgba(90, 130, 230, 0.35);
+}
+html.light .tech-home .flow-path.green {
+  stroke: rgba(57, 169, 107, 0.35);
+}
+html.light .tech-home .orbit-ring.orange {
+  stroke: rgba(244, 162, 97, 0.12);
+}
+html.light .tech-home .orbit-ring.blue {
+  stroke: rgba(90, 130, 230, 0.1);
+}
+
+/* KPI（dashboard.html：白底 + 浅阴影 + 柔和底色图标） */
+html.light .tech-home .kpi {
+  background: #fff;
+  border-color: var(--line);
+  box-shadow: 0 4px 16px rgba(20, 26, 32, 0.04);
+}
+html.light .tech-home .kpi:hover {
+  border-color: #f0c6a7;
+  box-shadow: 0 8px 24px rgba(20, 26, 32, 0.08);
+}
+html.light .tech-home .kpi-icon.orange {
+  background: var(--primary-3);
+}
+html.light .tech-home .kpi-icon.blue {
+  background: var(--blue-bg);
+}
+html.light .tech-home .kpi-icon.green {
+  background: var(--success-bg);
+}
+html.light .tech-home .kpi-icon.purple {
+  background: #f3f0ff;
+}
+html.light .tech-home .kpi-num {
+  color: var(--text) !important;
+}
+
+/* 卡片（dashboard.html .light-card） */
+html.light .tech-home .light-card {
+  background: #fff;
+  border-color: var(--line);
+  box-shadow: 0 4px 16px rgba(22, 28, 34, 0.04);
+}
+html.light .tech-home .light-card:hover {
+  box-shadow: 0 8px 28px rgba(22, 28, 34, 0.08);
+  border-color: #f0c6a7;
+}
+html.light .tech-home .light-card-head {
+  border-bottom: 1px solid #f0f2f4;
+}
+html.light .tech-home .light-card-head h3 {
+  color: #313a43;
+}
+html.light .tech-home .light-card-head span {
+  color: #909aa3;
+}
+
+/* 仪表盘 / 拓扑 / 动态 */
+html.light .tech-home .gauge-track {
+  stroke: #f0f2f4;
+}
+html.light .tech-home .topo-node-bg {
+  fill: #fff;
+}
+html.light .tech-home .topo-name {
+  fill: var(--muted);
+}
+html.light .tech-home .topo-section-label {
+  fill: var(--muted);
+}
+html.light .tech-home .topo-link {
+  stroke: #e8ebef;
+}
+html.light .tech-home .insight {
+  border-bottom: 1px solid #f0f2f4;
+}
+html.light .tech-home .insight:hover {
+  background: #fffaf6;
+}
+html.light .tech-home .insight-main {
+  color: #3d4650;
+}
+html.light .tech-home .insight-sub {
+  color: #9aa3ab;
+}
+html.light .tech-home .insight-num {
+  color: #bc7136;
+}
+</style>

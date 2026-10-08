@@ -145,8 +145,9 @@ import { set } from 'lodash-es'
 import { EChartsOption } from 'echarts'
 
 import { useDesign } from '@/hooks/web/useDesign'
+import { useAppStore } from '@/store/modules/app'
 import type { AnalysisTotalTypes } from './types'
-import { barOptions, lineOptions, pieOptions } from './echarts-data'
+import { barOptions, lineOptions, pieOptions, setEchartTheme } from './echarts-data'
 
 defineOptions({ name: 'Home2' })
 
@@ -266,6 +267,15 @@ const getAllApi = async () => {
 }
 
 getAllApi()
+
+const appStore = useAppStore()
+
+// 监听深/浅主题切换，实时更新图表配色
+watch(
+  () => appStore.getIsDark,
+  (dark) => setEchartTheme(dark),
+  { immediate: true }
+)
 </script>
 
 <style lang="scss" scoped>

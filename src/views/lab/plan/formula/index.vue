@@ -25,7 +25,7 @@
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable class="!w-200px">
-          <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />
+          <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -54,12 +54,17 @@
         </template>
       </el-table-column>
       <el-table-column label="工段" align="center" prop="section" min-width="120" />
+      <el-table-column label="配方描述" align="center" prop="description" min-width="200" />
       <el-table-column label="版本" align="center" prop="version" min-width="80" />
       <el-table-column label="当前版本" align="center" prop="current" min-width="90" />
       <el-table-column label="研发分类" align="center" prop="rdClass" min-width="110" />
       <el-table-column label="正负极" align="center" prop="pole" min-width="80" />
       <el-table-column label="优先级" align="center" prop="prio" min-width="80" />
-      <el-table-column label="状态" align="center" prop="status" min-width="90" />
+      <el-table-column label="状态" align="center" min-width="90">
+        <template #default="scope">
+          <el-tag :type="statusTagType(scope.row.status)" effect="light">{{ statusLabel(scope.row.status) }}</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column
         label="创建时间"
         align="center"
@@ -67,24 +72,58 @@
         :formatter="dateFormatter"
         width="170px"
       />
-      <el-table-column label="操作" align="center" width="160" fixed="right">
+      <el-table-column label="操作" align="center" width="230" fixed="right">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            @click="openForm('update', scope.row.id)"
-            v-hasPermi="['lab:formula:update']"
-          >
-            编辑
-          </el-button>
-          <el-button
-            link
-            type="danger"
-            @click="handleDelete(scope.row.id)"
-            v-hasPermi="['lab:formula:delete']"
-          >
-            删除
-          </el-button>
+          <!-- 新建：编辑 / 提交评审 / 取消 -->
+          <template v-if="scope.row.status === FormulaStatus.NEW">
+            <el-button
+              link
+              type="primary"
+              @click="openForm('update', scope.row.id)"
+              v-hasPermi="['lab:formula:update']"
+            >
+              编辑
+            </el-button>
+            <el-button
+              link
+              type="primary"
+              @click="handleSubmitReview(scope.row)"
+              v-hasPermi="['lab:formula:update']"
+            >
+              提交评审
+            </el-button>
+            <el-button link type="danger" @click="handleCancel(scope.row)" v-hasPermi="['lab:formula:update']">
+              取消
+            </el-button>
+          </template>
+          <!-- 评审中：编辑 / 下达 / 取消 -->
+          <template v-else-if="scope.row.status === FormulaStatus.REVIEWING">
+            <el-button
+              link
+              type="primary"
+              @click="openForm('update', scope.row.id)"
+              v-hasPermi="['lab:formula:update']"
+            >
+              编辑
+            </el-button>
+            <el-button link type="primary" @click="handleRelease(scope.row)" v-hasPermi="['lab:formula:update']">
+              下达
+            </el-button>
+            <el-button link type="danger" @click="handleCancel(scope.row)" v-hasPermi="['lab:formula:update']">
+              取消
+            </el-button>
+          </template>
+          <!-- 已下达：查看 / 取消 -->
+          <template v-else-if="scope.row.status === FormulaStatus.RELEASED">
+            <el-button link type="primary" @click="openForm('view', scope.row.id)">查看</el-button>
+            <el-button link type="danger" @click="handleCancel(scope.row)" v-hasPermi="['lab:formula:update']">
+              取消
+            </el-button>
+          </template>
+          <!-- 取消：查看 -->
+          <template v-else-if="scope.row.status === FormulaStatus.CANCELED">
+            <el-button link type="primary" @click="openForm('view', scope.row.id)">查看</el-button>
+          </template>
         </template>
       </el-table-column>
     </el-table>
@@ -97,8 +136,10 @@
     />
   </ContentWrap>
 
-  <!-- 表单弹窗：新增/修改 -->
+  <!-- 表单弹窗：新增/修改/查看 -->
   <el-dialog v-model="dialogVisible" :title="dialogTitle" width="1100px" append-to-body>
+    <!-- 查看模式：fieldset 原生禁用全部表单控件 -->
+    <fieldset :disabled="formReadonly" class="form-readonly-fieldset">
     <el-form
       ref="formRef"
       :model="formData"
@@ -227,12 +268,20 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="状态" prop="status">
-                <el-select v-model="formData.status" placeholder="请选择状态" class="!w-100%">
-                  <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />
-                </el-select>
+                <el-tag :type="statusTagType(formData.status)" effect="light">
+                  {{ statusLabel(formData.status) }}
+                </el-tag>
               </el-form-item>
             </el-col>
           </el-row>
+          <el-form-item label="配方描述" prop="description">
+            <el-input
+              v-model="formData.description"
+              type="textarea"
+              :rows="2"
+              placeholder="请输入配方描述"
+            />
+          </el-form-item>
         </el-tab-pane>
 
         <!-- 投料信息（仅配方段/合成段） -->
@@ -508,23 +557,27 @@
         </el-tab-pane>
       </el-tabs>
     </el-form>
+    </fieldset>
     <template #footer>
-      <el-button type="primary" @click="submitForm" :disabled="formLoading">确 定</el-button>
-      <el-button @click="dialogVisible = false">取 消</el-button>
+      <el-button type="primary" @click="submitForm" :disabled="formLoading" v-if="!formReadonly">确 定</el-button>
+      <el-button @click="dialogVisible = false">{{ formReadonly ? '关 闭' : '取 消' }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
+import { ElNotification } from 'element-plus'
 import { dateFormatter } from '@/utils/formatTime'
 import {
-  createFormula,
-  deleteFormula,
   FormulaFeedVO,
   FormulaSchemeVO,
   FormulaVO,
+  cancelFormula,
+  createFormula,
   getFormula,
   getFormulaPage,
+  releaseFormula,
+  submitReviewFormula,
   updateFormula
 } from '@/api/lab/formula'
 import { getRoute, getRoutePage, RouteVO } from '@/api/lab/route'
@@ -579,8 +632,37 @@ const CHECK_ITEM_TYPE: Record<string, number> = {
 }
 // 合浆-脱泡方法：项目类型 4（脱泡检测）
 const DEFOAM_PROJECT_TYPE = 4
-// 状态选项
-const statusOptions = ['新建', '评审中', '已下达', '取消']
+// 配方状态数字枚举（与后端 FormulaStatusEnum 对齐：1-新建、2-评审中、3-已下达、4-取消）
+const FormulaStatus = {
+  NEW: 1,
+  REVIEWING: 2,
+  RELEASED: 3,
+  CANCELED: 4
+} as const
+// 状态下拉选项
+const statusOptions = [
+  { value: FormulaStatus.NEW, label: '新建' },
+  { value: FormulaStatus.REVIEWING, label: '评审中' },
+  { value: FormulaStatus.RELEASED, label: '已下达' },
+  { value: FormulaStatus.CANCELED, label: '取消' }
+]
+/** 状态值 → 名称 */
+const statusLabel = (status?: number) => statusOptions.find((s) => s.value === status)?.label ?? '-'
+/** 状态值 → el-tag 类型 */
+const statusTagType = (status?: number) => {
+  switch (status) {
+    case FormulaStatus.NEW:
+      return 'info'
+    case FormulaStatus.REVIEWING:
+      return 'warning'
+    case FormulaStatus.RELEASED:
+      return 'success'
+    case FormulaStatus.CANCELED:
+      return 'danger'
+    default:
+      return 'info'
+  }
+}
 
 /** 查询列表 */
 const getList = async () => {
@@ -606,12 +688,46 @@ const resetQuery = () => {
   handleQuery()
 }
 
-/** 删除按钮操作 */
-const handleDelete = async (id: number) => {
+/** 右下角状态流转提示（深色弹窗，对齐截图样式） */
+const flowNotify = (content: string) => {
+  const notify = ElNotification({
+    title: '',
+    message: content,
+    position: 'bottom-right',
+    customClass: 'status-flow-toast',
+    duration: 3500,
+    showClose: false
+  })
+  // 兜底自动关闭：鼠标悬停时 Element Plus 会暂停计时，避免弹窗一直不消失
+  setTimeout(() => notify.close(), 3500)
+}
+
+/** 提交评审：新建 → 评审中 */
+const handleSubmitReview = async (row: FormulaVO) => {
   try {
-    await message.delConfirm()
-    await deleteFormula(id)
-    message.success(t('common.delSuccess'))
+    await message.confirm(`确认提交评审配方「${row.code}」？`)
+    await submitReviewFormula(row.id)
+    flowNotify(`配方 ${row.code} 已提交评审，状态「评审中」`)
+    await getList()
+  } catch {}
+}
+
+/** 下达：评审中 → 已下达 */
+const handleRelease = async (row: FormulaVO) => {
+  try {
+    await message.confirm(`确认下达配方「${row.code}」？`)
+    await releaseFormula(row.id)
+    flowNotify(`配方 ${row.code} 已流转至「已下达」，可在「实验任务调度」中一键排产`)
+    await getList()
+  } catch {}
+}
+
+/** 取消：新建/评审中/已下达 → 取消 */
+const handleCancel = async (row: FormulaVO) => {
+  try {
+    await message.confirm(`确认取消配方「${row.code}」？`)
+    await cancelFormula(row.id)
+    flowNotify(`配方 ${row.code} 已取消`)
     await getList()
   } catch {}
 }
@@ -620,7 +736,8 @@ const handleDelete = async (id: number) => {
 const dialogVisible = ref(false) // 弹窗的是否展示
 const dialogTitle = ref('') // 弹窗的标题
 const formLoading = ref(false) // 表单的加载中
-const formType = ref('') // 表单的类型：create - 新增；update - 修改
+const formType = ref('') // 表单的类型：create - 新增；update - 修改；view - 查看
+const formReadonly = ref(false) // 查看模式：禁用全部表单控件
 const formRef = ref() // 表单 Ref
 const activeTab = ref('base') // 当前激活的 Tab
 const activeProc = ref('') // 实验方案当前工序页签
@@ -655,7 +772,8 @@ const formData = ref({
   atk2: '',
   factor: '',
   purpose: '',
-  status: '',
+  description: '',
+  status: FormulaStatus.NEW,
   feedList: [] as FormulaFeedVO[],
   schemeList: [] as FormulaSchemeVO[],
   schemeMap: {} as Record<string, Record<string, any>>
@@ -675,8 +793,9 @@ const charItems = computed(() => CHAR_ITEMS[formData.value.section] || [])
 /** 打开弹窗 */
 const openForm = async (type: string, id?: number) => {
   dialogVisible.value = true
-  dialogTitle.value = type === 'create' ? '新增配方' : '编辑配方'
+  dialogTitle.value = type === 'create' ? '新增配方' : type === 'view' ? '查看配方' : '编辑配方'
   formType.value = type
+  formReadonly.value = type === 'view' // 查看模式：字段只读
   activeTab.value = 'base'
   activeProc.value = ''
   routeOptions.value = []
@@ -984,7 +1103,8 @@ const resetForm = () => {
     atk2: '',
     factor: '',
     purpose: '',
-    status: '',
+    description: '',
+    status: FormulaStatus.NEW,
     feedList: [],
     schemeList: [],
     schemeMap: {}
@@ -1092,5 +1212,43 @@ html.dark .subtab.active {
 html.dark .subtab.is-disabled {
   background: rgba(255, 255, 255, 0.03);
   color: #5c6b7e;
+}
+</style>
+
+<!-- 状态流转 toast 与 fieldset 重置（ElNotification 挂载于 body，样式需全局生效） -->
+<style lang="scss">
+.form-readonly-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+// 右下角状态流转深色弹窗（对齐截图样式：深炭底、白字、无图标）
+// background/color 加 !important，避免浅色主题下 .el-notification 的白色覆盖导致文字看不清
+.status-flow-toast {
+  background: #2c3e50 !important;
+  border: none !important;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 12px 16px;
+  color: #fff !important;
+
+  .el-notification__title {
+    display: none;
+  }
+  .el-notification__icon {
+    display: none;
+  }
+  .el-notification__content {
+    margin: 0;
+    padding: 0;
+    color: #fff !important;
+    font-size: 14px;
+    line-height: 20px;
+    text-align: left;
+  }
+  .el-notification__closeBtn {
+    color: rgba(255, 255, 255, 0.6);
+  }
 }
 </style>

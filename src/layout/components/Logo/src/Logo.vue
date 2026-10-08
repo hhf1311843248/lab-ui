@@ -71,10 +71,11 @@ watch(
       ]"
       to="/"
     >
-      <img
-        class="h-[calc(var(--logo-height)-10px)] w-[calc(var(--logo-height)-10px)]"
-        src="@/assets/imgs/logo.png"
-      />
+      <div
+        class="logo-brand-mark h-[calc(var(--logo-height)-10px)] w-[calc(var(--logo-height)-10px)]"
+      >
+        芯
+      </div>
       <div
         v-if="show"
         :class="[

@@ -3,21 +3,104 @@ import * as echarts from 'echarts'
 
 const { t } = useI18n()
 
-/* 深色赛博图表配色 */
-const cyberText = '#94a3b8'
-const cyberTextStrong = '#e2e8f0'
-const cyberAxisLine = 'rgba(0, 240, 255, 0.12)'
-const cyberSplitLine = 'rgba(0, 240, 255, 0.08)'
-const cyberTooltip = {
+/* 深色赛博图表配色（let，可被 setEchartTheme 按主题切换） */
+let cyberText = '#94a3b8'
+let cyberTextStrong = '#e2e8f0'
+let cyberAxisLine = 'rgba(0, 240, 255, 0.12)'
+let cyberSplitLine = 'rgba(0, 240, 255, 0.08)'
+let cyberTooltip = {
   backgroundColor: '#111827',
   borderColor: 'rgba(0, 240, 255, 0.2)',
   textStyle: { color: cyberTextStrong }
 }
-const cyberGradient = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+let cyberGradient = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
   { offset: 0, color: '#00f0ff' },
   { offset: 1, color: '#7b2ff7' }
 ])
-const cyberPieColors = ['#00f0ff', '#7b2ff7', '#3b82f6', '#10b981', '#f59e0b']
+let cyberPieColors = ['#00f0ff', '#7b2ff7', '#3b82f6', '#10b981', '#f59e0b']
+
+/* 浅色（dashboard.html 暖橙）图表配色 */
+const lightText = '#7B8794'
+const lightTextStrong = '#28323C'
+const lightAxisLine = '#E8EBEF'
+const lightSplitLine = '#F0F2F4'
+const lightTooltip = {
+  backgroundColor: '#FFFFFF',
+  borderColor: '#E8EBEF',
+  textStyle: { color: lightTextStrong }
+}
+const lightGradient = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+  { offset: 0, color: '#F4A261' },
+  { offset: 1, color: '#F7C59B' }
+])
+const lightPieColors = ['#F4A261', '#9B7FE6', '#5A82E6', '#39A96B', '#EFAF3B']
+
+/**
+ * 按深/浅切换图表配色（改写导出选项对象的颜色字段，随主题实时生效）
+ */
+export const setEchartTheme = (dark: boolean) => {
+  cyberText = dark ? '#94a3b8' : lightText
+  cyberTextStrong = dark ? '#e2e8f0' : lightTextStrong
+  cyberAxisLine = dark ? 'rgba(0, 240, 255, 0.12)' : lightAxisLine
+  cyberSplitLine = dark ? 'rgba(0, 240, 255, 0.08)' : lightSplitLine
+  cyberTooltip = dark
+    ? { backgroundColor: '#111827', borderColor: 'rgba(0, 240, 255, 0.2)', textStyle: { color: '#e2e8f0' } }
+    : lightTooltip
+  cyberGradient = dark
+    ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+        { offset: 0, color: '#00f0ff' },
+        { offset: 1, color: '#7b2ff7' }
+      ])
+    : lightGradient
+  cyberPieColors = dark ? ['#00f0ff', '#7b2ff7', '#3b82f6', '#10b981', '#f59e0b'] : lightPieColors
+
+  // 主题切换时原地改写导出选项的颜色字段（EChartsOption 类型较宽，此处按结构赋值）
+  const L: any = lineOptions
+  const P: any = pieOptions
+  const B: any = barOptions
+  const R: any = radarOption
+
+  // 线图
+  L.title.textStyle = { color: cyberTextStrong }
+  L.legend.textStyle = { color: cyberText }
+  L.xAxis.axisLabel = { color: cyberText }
+  L.xAxis.axisLine = { lineStyle: { color: cyberAxisLine } }
+  L.yAxis.axisLabel = { color: cyberText }
+  L.yAxis.axisLine = { lineStyle: { color: cyberAxisLine } }
+  L.yAxis.splitLine = { lineStyle: { color: cyberSplitLine } }
+  L.tooltip = { trigger: 'axis', axisPointer: { type: 'cross' }, padding: [5, 10], ...cyberTooltip }
+  L.series[0].itemStyle = { color: dark ? '#00f0ff' : '#F4A261' }
+  L.series[1].itemStyle = { color: dark ? '#7b2ff7' : '#5A82E6' }
+
+  // 饼图
+  P.title.textStyle = { color: cyberTextStrong }
+  P.legend.textStyle = { color: cyberText }
+  P.tooltip = { trigger: 'item', formatter: '{a} <br/>{b} : {c} ({d}%)', ...cyberTooltip }
+  P.series[0].color = cyberPieColors
+
+  // 柱状图
+  B.title.textStyle = { color: cyberTextStrong }
+  B.xAxis.axisLabel = { color: cyberText }
+  B.xAxis.axisLine = { lineStyle: { color: cyberAxisLine } }
+  B.yAxis.axisLabel = { color: cyberText }
+  B.yAxis.axisLine = { lineStyle: { color: cyberAxisLine } }
+  B.yAxis.splitLine = { lineStyle: { color: cyberSplitLine } }
+  B.tooltip = { trigger: 'axis', axisPointer: { type: 'shadow' }, ...cyberTooltip }
+  B.series[0].itemStyle = { borderRadius: [4, 4, 0, 0], color: cyberGradient }
+
+  // 雷达图
+  R.legend.textStyle = { color: cyberText }
+  R.radar.axisName = { color: cyberText }
+  R.radar.splitLine = { lineStyle: { color: cyberSplitLine } }
+  R.radar.axisLine = { lineStyle: { color: cyberAxisLine } }
+  R.radar.splitArea = {
+    areaStyle: {
+      color: dark
+        ? ['rgba(0, 240, 255, 0.02)', 'rgba(123, 47, 247, 0.04)']
+        : ['rgba(244, 162, 97, 0.02)', 'rgba(244, 162, 97, 0.05)']
+    }
+  }
+}
 
 export const lineOptions: EChartsOption = {
   title: {

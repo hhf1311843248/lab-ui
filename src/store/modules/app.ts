@@ -1,4 +1,5 @@
 import { CACHE_KEY, useCache } from '@/hooks/web/useCache'
+import { darkTheme, lightTheme } from '@/theme/themes'
 import { ElementPlusSize } from '@/types/elementPlus'
 import { LayoutType } from '@/types/layout'
 import { ThemeTypes } from '@/types/theme'
@@ -72,38 +73,9 @@ export const useAppStore = defineStore('app', {
       fixedMenu: wsCache.get('fixedMenu') || false, // 是否固定菜单
 
       layout: normalizeLayout(wsCache.get(CACHE_KEY.LAYOUT)), // layout布局
-      isDark: true, // 锁定深色赛博主题
+      isDark: wsCache.get(CACHE_KEY.IS_DARK) ?? true, // 深色/浅色主题（默认深色赛博）
       currentSize: wsCache.get('default') || 'default', // 组件尺寸
-      theme: wsCache.get(CACHE_KEY.THEME) || {
-        // 主题色（赛博青）
-        elColorPrimary: '#00f0ff',
-        // 左侧菜单边框颜色
-        leftMenuBorderColor: 'rgba(0, 240, 255, 0.15)',
-        // 左侧菜单背景颜色
-        leftMenuBgColor: 'rgba(10, 14, 26, 0.95)',
-        // 左侧菜单浅色背景颜色（赛博：二级菜单项透明，悬浮/激活才上色）
-        leftMenuBgLightColor: 'transparent',
-        // 左侧菜单选中背景颜色
-        leftMenuBgActiveColor: 'transparent',
-        // 左侧菜单收起选中背景颜色
-        leftMenuCollapseBgActiveColor: 'transparent',
-        // 左侧菜单字体颜色
-        leftMenuTextColor: '#94a3b8',
-        // 左侧菜单选中字体颜色
-        leftMenuTextActiveColor: '#00f0ff',
-        // logo字体颜色
-        logoTitleTextColor: '#fff',
-        // logo边框颜色
-        logoBorderColor: 'rgba(0, 240, 255, 0.15)',
-        // 头部背景颜色
-        topHeaderBgColor: 'rgba(10, 14, 26, 0.6)',
-        // 头部字体颜色
-        topHeaderTextColor: '#e2e8f0',
-        // 头部悬停颜色
-        topHeaderHoverColor: 'rgba(0, 240, 255, 0.08)',
-        // 头部边框颜色
-        topToolBorderColor: 'rgba(0, 240, 255, 0.15)'
-      }
+      theme: wsCache.get(CACHE_KEY.THEME) || darkTheme
     }
   },
   getters: {
@@ -319,6 +291,11 @@ export const useAppStore = defineStore('app', {
         setCssVar(`--${humpToUnderline(key)}`, this.theme[key])
       }
       this.setPrimaryLight()
+    },
+    // 按深/浅应用对应的主题预设（赛博深色 / dashboard.html 暖橙浅色）
+    applyThemePreset(isDark: boolean) {
+      this.setTheme(isDark ? darkTheme : lightTheme)
+      this.setCssVarTheme()
     },
     setFooter(footer: boolean) {
       this.footer = footer

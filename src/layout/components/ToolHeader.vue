@@ -8,6 +8,7 @@ import { Screenfull } from '@/layout/components/Screenfull'
 import { Breadcrumb } from '@/layout/components/Breadcrumb'
 import { SizeDropdown } from '@/layout/components/SizeDropdown'
 import { LocaleDropdown } from '@/layout/components/LocaleDropdown'
+import { ThemeSwitch } from '@/layout/components/ThemeSwitch'
 import RouterSearch from '@/components/RouterSearch/index.vue'
 import TenantVisit from '@/layout/components/TenantVisit/index.vue'
 import FmsAccountSetSwitch from '@/views/fms/components/account-set/FmsAccountSetSwitch.vue'
@@ -94,6 +95,7 @@ export default defineComponent({
           </div>
         ) : undefined}
         <div class="h-full flex items-center">
+          <ThemeSwitch class="custom-hover" />
           <FmsAccountSetSwitch />
           {hasTenantVisitPermission.value ? <TenantVisit /> : undefined}
           <div

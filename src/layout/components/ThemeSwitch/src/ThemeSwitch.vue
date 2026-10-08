@@ -23,6 +23,7 @@ const blackColor = 'var(--el-color-black)'
 
 const themeChange = (val: boolean) => {
   appStore.setIsDark(val)
+  appStore.applyThemePreset(val)
 }
 </script>
 

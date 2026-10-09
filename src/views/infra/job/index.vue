@@ -104,51 +104,57 @@
       <el-table-column label="处理器的名字" align="center" prop="handlerName" />
       <el-table-column label="处理器的参数" align="center" prop="handlerParam" />
       <el-table-column label="CRON 表达式" align="center" prop="cronExpression" />
-      <el-table-column label="操作" align="center" width="200">
+      <el-table-column label="操作" align="center" width="170">
         <template #default="scope">
-          <el-button
-            type="primary"
-            link
-            @click="openForm('update', scope.row.id)"
-            v-hasPermi="['infra:job:update']"
-          >
-            修改
-          </el-button>
-          <el-button
-            type="primary"
-            link
-            @click="handleChangeStatus(scope.row)"
-            v-hasPermi="['infra:job:update']"
-          >
-            {{ scope.row.status === InfraJobStatusEnum.STOP ? '开启' : '暂停' }}
-          </el-button>
-          <el-button
-            type="danger"
-            link
-            @click="handleDelete(scope.row.id)"
-            v-hasPermi="['infra:job:delete']"
-          >
-            删除
-          </el-button>
-          <el-dropdown
-            @command="(command) => handleCommand(command, scope.row)"
-            v-hasPermi="['infra:job:trigger', 'infra:job:query']"
-          >
-            <el-button type="primary" link><Icon icon="ep:d-arrow-right" /> 更多</el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="handleRun" v-if="checkPermi(['infra:job:trigger'])">
-                  执行一次
-                </el-dropdown-item>
-                <el-dropdown-item command="openDetail" v-if="checkPermi(['infra:job:query'])">
-                  任务详细
-                </el-dropdown-item>
-                <el-dropdown-item command="handleJobLog" v-if="checkPermi(['infra:job:query'])">
-                  调度日志
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+          <div class="flex items-center justify-center">
+            <el-button
+              type="primary"
+              link
+              @click="openForm('update', scope.row.id)"
+              v-hasPermi="['infra:job:update']"
+            >
+              修改
+            </el-button>
+            <el-button
+              type="primary"
+              link
+              @click="handleChangeStatus(scope.row)"
+              v-hasPermi="['infra:job:update']"
+            >
+              {{ scope.row.status === InfraJobStatusEnum.STOP ? '开启' : '暂停' }}
+            </el-button>
+            <el-dropdown trigger="click">
+              <el-button type="primary" link><Icon icon="ep:d-arrow-right" /> 更多</el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    @click="handleDelete(scope.row.id)"
+                    v-if="checkPermi(['infra:job:delete'])"
+                  >
+                    删除
+                  </el-dropdown-item>
+                  <el-dropdown-item
+                    @click="handleRun(scope.row)"
+                    v-if="checkPermi(['infra:job:trigger'])"
+                  >
+                    执行一次
+                  </el-dropdown-item>
+                  <el-dropdown-item
+                    @click="openDetail(scope.row.id)"
+                    v-if="checkPermi(['infra:job:query'])"
+                  >
+                    任务详细
+                  </el-dropdown-item>
+                  <el-dropdown-item
+                    @click="handleJobLog(scope.row.id)"
+                    v-if="checkPermi(['infra:job:query'])"
+                  >
+                    调度日志
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -302,23 +308,6 @@ const handleDeleteBatch = async () => {
     // 刷新列表
     await getList()
   } catch {}
-}
-
-/** '更多'操作按钮 */
-const handleCommand = (command, row) => {
-  switch (command) {
-    case 'handleRun':
-      handleRun(row)
-      break
-    case 'openDetail':
-      openDetail(row.id)
-      break
-    case 'handleJobLog':
-      handleJobLog(row?.id)
-      break
-    default:
-      break
-  }
 }
 
 /** 执行一次 */

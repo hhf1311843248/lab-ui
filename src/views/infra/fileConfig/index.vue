@@ -93,34 +93,41 @@
         width="180"
         :formatter="dateFormatter"
       />
-      <el-table-column label="操作" align="center" width="240px">
+      <el-table-column label="操作" align="center" width="170">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            @click="openForm('update', scope.row.id)"
-            v-hasPermi="['infra:file-config:update']"
-          >
-            编辑
-          </el-button>
-          <el-button
-            link
-            type="primary"
-            :disabled="scope.row.master"
-            @click="handleMaster(scope.row.id)"
-            v-hasPermi="['infra:file-config:update']"
-          >
-            主配置
-          </el-button>
-          <el-button link type="primary" @click="handleTest(scope.row.id)"> 测试 </el-button>
-          <el-button
-            link
-            type="danger"
-            @click="handleDelete(scope.row.id)"
-            v-hasPermi="['infra:file-config:delete']"
-          >
-            删除
-          </el-button>
+          <div class="flex items-center justify-center">
+            <el-button
+              link
+              type="primary"
+              @click="openForm('update', scope.row.id)"
+              v-hasPermi="['infra:file-config:update']"
+            >
+              编辑
+            </el-button>
+            <el-button
+              link
+              type="primary"
+              :disabled="scope.row.master"
+              @click="handleMaster(scope.row.id)"
+              v-hasPermi="['infra:file-config:update']"
+            >
+              主配置
+            </el-button>
+            <el-dropdown trigger="click">
+              <el-button link type="primary"><Icon icon="ep:d-arrow-right" /> 更多</el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item @click="handleTest(scope.row.id)"> 测试 </el-dropdown-item>
+                  <el-dropdown-item
+                    @click="handleDelete(scope.row.id)"
+                    v-if="checkPermi(['infra:file-config:delete'])"
+                  >
+                    删除
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -141,6 +148,7 @@ import * as FileConfigApi from '@/api/infra/fileConfig'
 import FileConfigForm from './FileConfigForm.vue'
 import { DICT_TYPE, getIntDictOptions } from '@/utils/dict'
 import { dateFormatter } from '@/utils/formatTime'
+import { checkPermi } from '@/utils/permission'
 
 defineOptions({ name: 'InfraFileConfig' })
 

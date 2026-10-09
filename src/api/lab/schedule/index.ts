@@ -37,3 +37,8 @@ export const getSchedule = async (id) => {
 export const getSchedulePage = async (query) => {
   return await request.get({ url: '/lab/schedule/page', params: query })
 }
+
+// 一键自动排产
+export const autoSchedule = async () => {
+  return await request.post({ url: '/lab/schedule/auto' })
+}

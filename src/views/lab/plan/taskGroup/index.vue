@@ -148,7 +148,6 @@
             <el-date-picker
               v-model="formData.planStart"
               type="datetime"
-              value-format="YYYY-MM-DD HH:mm:ss"
               placeholder="选择计划开始时间"
               class="!w-100%"
             />
@@ -159,7 +158,6 @@
             <el-date-picker
               v-model="formData.planEnd"
               type="datetime"
-              value-format="YYYY-MM-DD HH:mm:ss"
               placeholder="选择计划完成时间"
               class="!w-100%"
             />
@@ -361,6 +359,10 @@ const formData = ref({
 })
 const formRules = reactive({
   code: [{ required: true, message: '任务组编号不能为空', trigger: 'blur' }],
+  description: [{ required: true, message: '任务组描述不能为空', trigger: 'blur' }],
+  prio: [{ required: true, message: '请选择优先级', trigger: 'change' }],
+  planStart: [{ required: true, message: '请选择计划开始时间', trigger: 'blur' }],
+  planEnd: [{ required: true, message: '请选择计划完成时间', trigger: 'blur' }],
   formulaCode: [{ required: true, message: '配方编号不能为空', trigger: 'blur' }]
 })
 
@@ -375,6 +377,8 @@ const openForm = async (type: string, id?: number) => {
     formLoading.value = true
     try {
       const data = await getTaskGroup(id)
+      data.planStart = toDate(data.planStart)
+      data.planEnd = toDate(data.planEnd)
       formData.value = data
       if (!formData.value.linkList) {
         formData.value.linkList = []
@@ -397,10 +401,21 @@ const handleDeleteLink = (index: number) => {
 
 /** 提交表单 */
 const submitForm = async () => {
+  // 校验：至少关联一个配方，且配方编号不能为空
+  if (
+    !formData.value.linkList ||
+    !formData.value.linkList.length ||
+    !formData.value.linkList.some((l) => l.formulaCode)
+  ) {
+    message.error('请至少关联一个配方')
+    return
+  }
   await formRef.value.validate()
   formLoading.value = true
   try {
     const data = { ...formData.value }
+    data.planStart = toTs(data.planStart)
+    data.planEnd = toTs(data.planEnd)
     if (formType.value === 'create') {
       await createTaskGroup(data)
       message.success(t('common.createSuccess'))
@@ -414,6 +429,22 @@ const submitForm = async () => {
     formLoading.value = false
   }
 }
+
+/** epoch 数字 / 字符串 → Date（供编辑回填日期控件） */
+const toDate = (v?: any) =>
+  v == null || v === ''
+    ? undefined
+    : new Date(typeof v === 'number' ? v : new Date(String(v).replace('T', ' ')).getTime())
+
+/** Date / epoch / 字符串 → epoch 毫秒（提交前转数字，适配后端反序列化） */
+const toTs = (v?: any) =>
+  v == null || v === ''
+    ? undefined
+    : v instanceof Date
+      ? v.getTime()
+      : typeof v === 'number'
+        ? v
+        : new Date(String(v).replace('T', ' ')).getTime()
 
 /** 重置表单 */
 const resetForm = () => {

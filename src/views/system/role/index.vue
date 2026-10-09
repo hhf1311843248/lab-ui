@@ -118,44 +118,45 @@
         prop="createTime"
         width="180"
       />
-      <el-table-column :width="300" align="center" label="操作">
+      <el-table-column :width="170" align="center" label="操作">
         <template #default="scope">
-          <el-button
-            v-hasPermi="['system:role:update']"
-            link
-            type="primary"
-            @click="openForm('update', scope.row.id)"
-          >
-            编辑
-          </el-button>
-          <el-button
-            v-hasPermi="['system:permission:assign-role-menu']"
-            link
-            preIcon="ep:basketball"
-            title="菜单权限"
-            type="primary"
-            @click="openAssignMenuForm(scope.row)"
-          >
-            菜单权限
-          </el-button>
-          <el-button
-            v-hasPermi="['system:permission:assign-role-data-scope']"
-            link
-            preIcon="ep:coin"
-            title="数据权限"
-            type="primary"
-            @click="openDataPermissionForm(scope.row)"
-          >
-            数据权限
-          </el-button>
-          <el-button
-            v-hasPermi="['system:role:delete']"
-            link
-            type="danger"
-            @click="handleDelete(scope.row.id)"
-          >
-            删除
-          </el-button>
+          <div class="flex items-center justify-center">
+            <el-button
+              v-hasPermi="['system:role:update']"
+              link
+              type="primary"
+              @click="openForm('update', scope.row.id)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              v-hasPermi="['system:permission:assign-role-menu']"
+              link
+              type="primary"
+              @click="openAssignMenuForm(scope.row)"
+            >
+              <Icon icon="ep:basketball" />菜单权限
+            </el-button>
+            <el-dropdown trigger="click">
+              <el-button link type="primary"><Icon icon="ep:d-arrow-right" /> 更多</el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    @click="openDataPermissionForm(scope.row)"
+                    v-if="checkPermi(['system:permission:assign-role-data-scope'])"
+                  >
+                    <Icon icon="ep:coin" />数据权限
+                  </el-dropdown-item>
+                  <el-dropdown-item
+                    @click="handleDelete(scope.row.id)"
+                    v-if="checkPermi(['system:role:delete'])"
+                  >
+                    <Icon icon="ep:delete" />删除
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -177,6 +178,7 @@
 </template>
 <script lang="ts" setup>
 import { DICT_TYPE, getIntDictOptions } from '@/utils/dict'
+import { checkPermi } from '@/utils/permission'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
 import * as RoleApi from '@/api/system/role'

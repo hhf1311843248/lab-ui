@@ -72,67 +72,122 @@
         :formatter="dateFormatter"
         width="170px"
       />
-      <el-table-column label="操作" align="center" width="290" fixed="right">
+      <el-table-column label="操作" align="center" width="170" fixed="right">
         <template #default="scope">
-          <!-- 复制：所有状态均可 -->
-          <el-button
-            link
-            type="primary"
-            @click="handleCopy(scope.row)"
-            v-hasPermi="['lab:formula:create']"
-          >
-            复制
-          </el-button>
-          <!-- 新建：编辑 / 提交评审 / 取消 -->
-          <template v-if="scope.row.status === FormulaStatus.NEW">
-            <el-button
-              link
-              type="primary"
-              @click="openForm('update', scope.row.id)"
-              v-hasPermi="['lab:formula:update']"
-            >
-              编辑
-            </el-button>
-            <el-button
-              link
-              type="primary"
-              @click="handleSubmitReview(scope.row)"
-              v-hasPermi="['lab:formula:update']"
-            >
-              提交评审
-            </el-button>
-            <el-button link type="danger" @click="handleCancel(scope.row)" v-hasPermi="['lab:formula:update']">
-              取消
-            </el-button>
-          </template>
-          <!-- 评审中：编辑 / 下达 / 取消 -->
-          <template v-else-if="scope.row.status === FormulaStatus.REVIEWING">
-            <el-button
-              link
-              type="primary"
-              @click="openForm('update', scope.row.id)"
-              v-hasPermi="['lab:formula:update']"
-            >
-              编辑
-            </el-button>
-            <el-button link type="primary" @click="handleRelease(scope.row)" v-hasPermi="['lab:formula:update']">
-              下达
-            </el-button>
-            <el-button link type="danger" @click="handleCancel(scope.row)" v-hasPermi="['lab:formula:update']">
-              取消
-            </el-button>
-          </template>
-          <!-- 已下达：查看 / 取消 -->
-          <template v-else-if="scope.row.status === FormulaStatus.RELEASED">
-            <el-button link type="primary" @click="openForm('view', scope.row.id)">查看</el-button>
-            <el-button link type="danger" @click="handleCancel(scope.row)" v-hasPermi="['lab:formula:update']">
-              取消
-            </el-button>
-          </template>
-          <!-- 取消：查看 -->
-          <template v-else-if="scope.row.status === FormulaStatus.CANCELED">
-            <el-button link type="primary" @click="openForm('view', scope.row.id)">查看</el-button>
-          </template>
+          <div class="flex items-center justify-center">
+            <!-- 新建：编辑 可见；提交评审 / 复制 / 取消 进更多 -->
+            <template v-if="scope.row.status === FormulaStatus.NEW">
+              <el-button
+                link
+                type="primary"
+                @click="openForm('update', scope.row.id)"
+                v-hasPermi="['lab:formula:update']"
+              >
+                编辑
+              </el-button>
+              <el-dropdown trigger="click">
+                <el-button link type="primary"><Icon icon="ep:d-arrow-right" /> 更多</el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item
+                      @click="handleSubmitReview(scope.row)"
+                      v-if="checkPermi(['lab:formula:update'])"
+                    >
+                      提交评审
+                    </el-dropdown-item>
+                    <el-dropdown-item
+                      @click="handleCopy(scope.row)"
+                      v-if="checkPermi(['lab:formula:create'])"
+                    >
+                      复制
+                    </el-dropdown-item>
+                    <el-dropdown-item
+                      @click="handleCancel(scope.row)"
+                      v-if="checkPermi(['lab:formula:update'])"
+                    >
+                      取消
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
+            <!-- 评审中：编辑 可见；下达 / 复制 / 取消 进更多 -->
+            <template v-else-if="scope.row.status === FormulaStatus.REVIEWING">
+              <el-button
+                link
+                type="primary"
+                @click="openForm('update', scope.row.id)"
+                v-hasPermi="['lab:formula:update']"
+              >
+                编辑
+              </el-button>
+              <el-dropdown trigger="click">
+                <el-button link type="primary"><Icon icon="ep:d-arrow-right" /> 更多</el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item
+                      @click="handleRelease(scope.row)"
+                      v-if="checkPermi(['lab:formula:update'])"
+                    >
+                      下达
+                    </el-dropdown-item>
+                    <el-dropdown-item
+                      @click="handleCopy(scope.row)"
+                      v-if="checkPermi(['lab:formula:create'])"
+                    >
+                      复制
+                    </el-dropdown-item>
+                    <el-dropdown-item
+                      @click="handleCancel(scope.row)"
+                      v-if="checkPermi(['lab:formula:update'])"
+                    >
+                      取消
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
+            <!-- 已下达：查看 可见；复制 / 取消 进更多 -->
+            <template v-else-if="scope.row.status === FormulaStatus.RELEASED">
+              <el-button link type="primary" @click="openForm('view', scope.row.id)">查看</el-button>
+              <el-dropdown trigger="click">
+                <el-button link type="primary"><Icon icon="ep:d-arrow-right" /> 更多</el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item
+                      @click="handleCopy(scope.row)"
+                      v-if="checkPermi(['lab:formula:create'])"
+                    >
+                      复制
+                    </el-dropdown-item>
+                    <el-dropdown-item
+                      @click="handleCancel(scope.row)"
+                      v-if="checkPermi(['lab:formula:update'])"
+                    >
+                      取消
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
+            <!-- 取消：查看 可见；复制 进更多 -->
+            <template v-else-if="scope.row.status === FormulaStatus.CANCELED">
+              <el-button link type="primary" @click="openForm('view', scope.row.id)">查看</el-button>
+              <el-dropdown trigger="click">
+                <el-button link type="primary"><Icon icon="ep:d-arrow-right" /> 更多</el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item
+                      @click="handleCopy(scope.row)"
+                      v-if="checkPermi(['lab:formula:create'])"
+                    >
+                      复制
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -825,6 +880,7 @@
 
 <script setup lang="ts">
 import { ElNotification } from 'element-plus'
+import { checkPermi } from '@/utils/permission'
 import { dateFormatter } from '@/utils/formatTime'
 import {
   FormulaFeedVO,

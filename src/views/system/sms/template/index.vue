@@ -178,32 +178,39 @@
         width="180"
         :formatter="dateFormatter"
       />
-      <el-table-column label="操作" align="center" width="210" fixed="right">
+      <el-table-column label="操作" align="center" width="170" fixed="right">
         <template #default="scope">
-          <el-button
-            link
-            type="primary"
-            @click="openForm('update', scope.row.id)"
-            v-hasPermi="['system:sms-template:update']"
-          >
-            修改
-          </el-button>
-          <el-button
-            link
-            type="primary"
-            @click="openSendForm(scope.row.id)"
-            v-hasPermi="['system:sms-template:send-sms']"
-          >
-            测试
-          </el-button>
-          <el-button
-            link
-            type="danger"
-            @click="handleDelete(scope.row.id)"
-            v-hasPermi="['system:sms-template:delete']"
-          >
-            删除
-          </el-button>
+          <div class="flex items-center justify-center">
+            <el-button
+              link
+              type="primary"
+              @click="openForm('update', scope.row.id)"
+              v-hasPermi="['system:sms-template:update']"
+            >
+              修改
+            </el-button>
+            <el-button
+              link
+              type="primary"
+              @click="openSendForm(scope.row.id)"
+              v-hasPermi="['system:sms-template:send-sms']"
+            >
+              测试
+            </el-button>
+            <el-dropdown trigger="click">
+              <el-button link type="primary"><Icon icon="ep:d-arrow-right" /> 更多</el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    @click="handleDelete(scope.row.id)"
+                    v-if="checkPermi(['system:sms-template:delete'])"
+                  >
+                    <Icon icon="ep:delete" />删除
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -223,6 +230,7 @@
 </template>
 <script lang="ts" setup>
 import { DICT_TYPE, getIntDictOptions, getDictLabel } from '@/utils/dict'
+import { checkPermi } from '@/utils/permission'
 import { dateFormatter } from '@/utils/formatTime'
 import * as SmsTemplateApi from '@/api/system/sms/smsTemplate'
 import * as SmsChannelApi from '@/api/system/sms/smsChannel'

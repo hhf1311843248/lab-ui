@@ -75,23 +75,30 @@
       </el-table-column>
       <el-table-column label="操作" align="center" width="190" fixed="right">
         <template #default="scope">
-          <el-button link type="primary" @click="openDetail(scope.row)">明细</el-button>
-          <el-button
-            link
-            type="primary"
-            @click="openForm('update', scope.row.id)"
-            v-hasPermi="['lab:route:update']"
-          >
-            编辑
-          </el-button>
-          <el-button
-            link
-            type="danger"
-            @click="handleDelete(scope.row.id)"
-            v-hasPermi="['lab:route:delete']"
-          >
-            删除
-          </el-button>
+          <div class="flex items-center justify-center">
+            <el-button link type="primary" @click="openDetail(scope.row)">明细</el-button>
+            <el-button
+              link
+              type="primary"
+              @click="openForm('update', scope.row.id)"
+              v-hasPermi="['lab:route:update']"
+            >
+              编辑
+            </el-button>
+            <el-dropdown trigger="click">
+              <el-button link type="primary"><Icon icon="ep:d-arrow-right" /> 更多</el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    @click="handleDelete(scope.row.id)"
+                    v-if="checkPermi(['lab:route:delete'])"
+                  >
+                    删除
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -224,6 +231,7 @@ import {
 } from '@/api/lab/route'
 import { LabSectionEnum, getLabSectionName } from '@/api/lab/resource'
 import { getProcessListBySection, ProcessVO } from '@/api/lab/process'
+import { checkPermi } from '@/utils/permission'
 
 defineOptions({ name: 'LabRoute' })
 

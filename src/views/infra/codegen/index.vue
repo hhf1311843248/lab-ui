@@ -102,48 +102,51 @@
         prop="createTime"
         width="180"
       />
-      <el-table-column align="center" fixed="right" label="操作" width="300px">
+      <el-table-column align="center" fixed="right" label="操作" width="170">
         <template #default="scope">
-          <el-button
-            v-hasPermi="['infra:codegen:preview']"
-            link
-            type="primary"
-            @click="handlePreview(scope.row)"
-          >
-            预览
-          </el-button>
-          <el-button
-            v-hasPermi="['infra:codegen:update']"
-            link
-            type="primary"
-            @click="handleUpdate(scope.row.id)"
-          >
-            编辑
-          </el-button>
-          <el-button
-            v-hasPermi="['infra:codegen:delete']"
-            link
-            type="danger"
-            @click="handleDelete(scope.row.id)"
-          >
-            删除
-          </el-button>
-          <el-button
-            v-hasPermi="['infra:codegen:update']"
-            link
-            type="primary"
-            @click="handleSyncDB(scope.row)"
-          >
-            同步
-          </el-button>
-          <el-button
-            v-hasPermi="['infra:codegen:download']"
-            link
-            type="primary"
-            @click="handleGenTable(scope.row)"
-          >
-            生成代码
-          </el-button>
+          <div class="flex items-center justify-center">
+            <el-button
+              v-hasPermi="['infra:codegen:preview']"
+              link
+              type="primary"
+              @click="handlePreview(scope.row)"
+            >
+              预览
+            </el-button>
+            <el-button
+              v-hasPermi="['infra:codegen:update']"
+              link
+              type="primary"
+              @click="handleUpdate(scope.row.id)"
+            >
+              编辑
+            </el-button>
+            <el-dropdown trigger="click">
+              <el-button link type="primary"><Icon icon="ep:d-arrow-right" /> 更多</el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    @click="handleDelete(scope.row.id)"
+                    v-if="checkPermi(['infra:codegen:delete'])"
+                  >
+                    删除
+                  </el-dropdown-item>
+                  <el-dropdown-item
+                    @click="handleSyncDB(scope.row)"
+                    v-if="checkPermi(['infra:codegen:update'])"
+                  >
+                    同步
+                  </el-dropdown-item>
+                  <el-dropdown-item
+                    @click="handleGenTable(scope.row)"
+                    v-if="checkPermi(['infra:codegen:download'])"
+                  >
+                    生成代码
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -163,6 +166,7 @@
 </template>
 <script lang="ts" setup>
 import { dateFormatter } from '@/utils/formatTime'
+import { checkPermi } from '@/utils/permission'
 import download from '@/utils/download'
 import * as CodegenApi from '@/api/infra/codegen'
 import * as DataSourceConfigApi from '@/api/infra/dataSourceConfig'

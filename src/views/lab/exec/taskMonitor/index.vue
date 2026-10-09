@@ -70,6 +70,7 @@
       :stripe="true"
       :show-overflow-tooltip="true"
       row-key="id"
+      :row-class-name="rowClassName"
     >
       <el-table-column label="任务编号" align="center" prop="taskNo" width="160">
         <template #default="scope">
@@ -177,6 +178,9 @@ const queryFormRef = ref() // 搜索的表单
 // 状态选项
 const statusOptions = ['待开始', '执行中', '暂停', '已完工', '异常']
 
+/** 已下达状态行高亮（浅绿背景） */
+const rowClassName = ({ row }) => (row.status === '已下达' ? 'task-row-released' : '')
+
 /** 状态对应的 el-tag 颜色 */
 const taskStatusType = (status: string) => {
   switch (status) {
@@ -256,3 +260,13 @@ onMounted(() => {
   getList()
 })
 </script>
+
+<style lang="scss">
+// 已下达状态行：浅绿背景（浅色主题用更浅的绿，深色主题用深绿）
+.el-table__row.task-row-released td.el-table__cell {
+  background-color: #ddf3e1;
+}
+html.dark .el-table__row.task-row-released td.el-table__cell {
+  background-color: #123c1f;
+}
+</style>

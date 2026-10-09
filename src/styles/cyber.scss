@@ -725,6 +725,11 @@ html.light .logo-brand-mark {
   box-shadow: 0 6px 16px rgba(244, 162, 97, 0.25);
 }
 
+/* ===== 表格操作列：更多下拉与前一按钮间距对齐（12px，同 el-button 间隙） ===== */
+.el-table .el-dropdown {
+  margin-left: 12px;
+}
+
 /* ============================================================
    浅色主题（严格参照 lab/dashboard.html 暖橙实验室风）
    primary #F4A261 · 卡片 #FFFFFF · 底 #F7F8FA · 线 #E8EBEF · 文本 #28323C

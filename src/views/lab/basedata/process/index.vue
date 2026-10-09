@@ -58,8 +58,7 @@
       <el-table-column label="工段描述" align="center" prop="secName" min-width="140" />
       <el-table-column label="工序编号" align="center" prop="procCode" width="120" />
       <el-table-column label="工序描述" align="center" prop="procName" min-width="180" />
-      <el-table-column label="标准节拍" align="center" prop="takt" width="100" />
-      <el-table-column label="默认资源" align="center" prop="resName" min-width="120" />
+      <el-table-column label="默认资源" align="center" prop="resType" min-width="120" />
       <el-table-column label="状态" align="center" prop="status" width="80">
         <template #default="scope">
           <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="scope.row.status" />
@@ -133,24 +132,19 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="标准节拍" prop="takt">
-            <el-input-number v-model="formData.takt" :min="0" :precision="2" class="!w-1/1" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="默认资源" prop="resName">
+          <el-form-item label="默认资源" prop="resType">
             <el-select
-              v-model="formData.resName"
+              v-model="formData.resType"
               placeholder="请选择默认资源"
               clearable
               class="!w-1/1"
               :disabled="!formData.secCode"
             >
               <el-option
-                v-for="item in resourceOptions"
-                :key="item.id"
-                :label="item.name"
-                :value="item.name"
+                v-for="item in resourceTypeOptions"
+                :key="item.type"
+                :label="item.type"
+                :value="item.type"
               />
             </el-select>
           </el-form-item>
@@ -241,13 +235,23 @@ const dialogTitle = ref('') // 弹窗的标题
 const formLoading = ref(false) // 表单的加载中：1）修改时的数据加载；2）提交的按钮禁用
 const formType = ref('') // 表单的类型：create - 新增；update - 修改
 const resourceOptions = ref<ResourceVO[]>([]) // 默认资源下拉的可选资源（按工段加载）
+// 默认资源下拉按资源类型去重
+const resourceTypeOptions = computed(() => {
+  const seen = new Set<string>()
+  return resourceOptions.value.filter((item) => {
+    if (!item.type || seen.has(item.type)) {
+      return false
+    }
+    seen.add(item.type)
+    return true
+  })
+})
 const formData = ref({
   id: undefined,
   secCode: undefined,
   procCode: undefined,
   procName: undefined,
-  takt: undefined,
-  resName: undefined,
+  resType: undefined,
   status: CommonStatusEnum.ENABLE
 })
 const formRules = reactive({
@@ -265,7 +269,7 @@ const formRef = ref() // 表单 Ref
 const handleSectionChange = async (preserveResName = false) => {
   resourceOptions.value = []
   if (!preserveResName) {
-    formData.value.resName = undefined
+    formData.value.resType = undefined
   }
   if (formData.value.secCode) {
     resourceOptions.value = await getResourceListBySection(formData.value.secCode)
@@ -321,8 +325,7 @@ const resetForm = () => {
     secCode: undefined,
     procCode: undefined,
     procName: undefined,
-    takt: undefined,
-    resName: undefined,
+    resType: undefined,
     status: CommonStatusEnum.ENABLE
   }
   resourceOptions.value = []

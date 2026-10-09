@@ -260,13 +260,11 @@
           </el-table-column>
         </el-table>
       </template>
-      <!-- 流变测试：方法名称下拉（禁用，不可编辑） -->
+      <!-- 流变测试：方法名称（只读展示，自动换行显示全名） -->
       <template v-else-if="detailData.projectType === 3">
         <div class="param-field">
           <span class="field-label">方法名称</span>
-          <el-select :model-value="configObject.methodName" disabled class="field-input">
-            <el-option :value="configObject.methodName" :label="configObject.methodName" />
-          </el-select>
+          <span class="method-name-text" :title="configObject.methodName">{{ configObject.methodName || '—' }}</span>
         </div>
       </template>
       <!-- XRD检测：扫描角度 / 扫描步长 / 每步计数时间（严格按原型布局，禁用展示） -->
@@ -312,43 +310,45 @@
       </template>
       <!-- 离子电导率：检测方法 / 检测参数（严格按原型布局，禁用展示） -->
       <template v-else-if="detailData.projectType === 6">
-        <div class="param-sub-title">M 检测方法</div>
-        <div class="param-field">
-          <span class="field-label wide">检测方法（离子电导率）</span>
-          <el-select :model-value="configObject.methodName" disabled class="field-input">
-            <el-option :value="configObject.methodName" :label="configObject.methodName" />
-          </el-select>
+        <div class="mp-card">
+          <div class="mp-title"><span class="mp-badge">M</span>检测方法</div>
+          <div class="param-field">
+            <span class="field-label wide">检测方法（离子电导率）</span>
+            <span class="method-name-text" :title="configObject.methodName">{{ configObject.methodName || '—' }}</span>
+          </div>
         </div>
-        <div class="param-sub-title">P 检测参数</div>
-        <div class="param-field">
-          <span class="field-label">检测温度</span>
-          <el-input-number
-            :model-value="configObject.temperature"
-            disabled
-            :controls="false"
-            class="field-input"
-          />
-          <span class="field-unit">℃</span>
-        </div>
-        <div class="param-field">
-          <span class="field-label">压力调节</span>
-          <el-input-number
-            :model-value="configObject.pressure"
-            disabled
-            :controls="false"
-            class="field-input"
-          />
-          <span class="field-unit">T</span>
-        </div>
-        <div class="param-field">
-          <span class="field-label">保压时间</span>
-          <el-input-number
-            :model-value="configObject.holdingTime"
-            disabled
-            :controls="false"
-            class="field-input"
-          />
-          <span class="field-unit">s</span>
+        <div class="mp-card">
+          <div class="mp-title"><span class="mp-badge">P</span>检测参数</div>
+          <div class="param-field">
+            <span class="field-label">检测温度</span>
+            <el-input-number
+              :model-value="configObject.temperature"
+              disabled
+              :controls="false"
+              class="field-input"
+            />
+            <span class="field-unit">℃</span>
+          </div>
+          <div class="param-field">
+            <span class="field-label">压力调节</span>
+            <el-input-number
+              :model-value="configObject.pressure"
+              disabled
+              :controls="false"
+              class="field-input"
+            />
+            <span class="field-unit">T</span>
+          </div>
+          <div class="param-field">
+            <span class="field-label">保压时间</span>
+            <el-input-number
+              :model-value="configObject.holdingTime"
+              disabled
+              :controls="false"
+              class="field-input"
+            />
+            <span class="field-unit">s</span>
+          </div>
         </div>
       </template>
       <!-- 其它检测类型：通用配置展示 -->
@@ -567,6 +567,49 @@ onMounted(() => {
 .field-unit {
   color: var(--text-secondary);
   font-size: 13px;
+}
+/* 方法名称：供应商推送值只读展示，自动换行保证全名可见 */
+.method-name-text {
+  flex: 1;
+  min-width: 200px;
+  padding: 5px 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  word-break: break-all;
+  white-space: normal;
+}
+/* 离子电导率：M/P 子模块卡片 */
+.mp-card {
+  background: rgba(0, 240, 255, 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+.mp-title {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.mp-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border-radius: 4px;
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--accent-cyan);
+  font-weight: 700;
+  font-size: 12px;
 }
 /* XRD检测：扫描角度区间 */
 .xrd-input {

@@ -41,6 +41,8 @@ export interface ResourceVO {
   type: string
   sectionCode: string
   shift: string
+  beatTime: number
+  beatUnit: string
   status: number
 }
 

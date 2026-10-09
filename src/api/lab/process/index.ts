@@ -6,8 +6,7 @@ export interface ProcessVO {
   secName: string
   procCode: string
   procName: string
-  takt: number
-  resName: string
+  resType: string
   status: number
 }
 

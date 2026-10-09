@@ -6,7 +6,7 @@
       <div class="board-head">
         <div class="sec-head">
           <span>排产队列 · 按优先级</span>
-          <span class="sec-sub">已下达 / 生产中的实验任务进入排产队列；已下达任务点击卡片可编辑优先级</span>
+          <span class="sec-sub">已下达 / 生产中的实验任务进入排产队列；已下达任务点击卡片可编辑任务组</span>
         </div>
         <el-button type="primary" plain :loading="loading" @click="loadQueue">
           <Icon icon="ep:refresh" class="mr-5px" /> 刷新
@@ -18,14 +18,14 @@
             v-for="(item, idx) in queueList"
             :key="item.id"
             class="queue-card"
-            :class="['qa-' + item.status, { clickable: item.status === '已下达' }]"
-            @click="openPriority(item)"
+            :class="['qa-' + statusClass(item.status), { clickable: item.status === TaskGroupStatus.RELEASED }]"
+            @click="openEdit(item)"
           >
             <div class="qc-top">
               <span class="qc-ord">{{ idx + 1 }}</span>
               <span class="qc-code">{{ item.code }}</span>
-              <span class="tag st" :class="'st-' + item.status">{{ item.status }}</span>
-              <span class="tag pr" :class="'pr-' + item.prio">{{ item.prio }}</span>
+              <span class="tag st" :class="'st-' + statusClass(item.status)">{{ statusLabel(item.status) }}</span>
+              <span class="tag pr" :class="'pr-' + prioClass(item.prio)">{{ prioLabel(item.prio) }}</span>
               <span
                 class="tag sim"
                 :class="'sim-' + simClass(item.simStatus)"
@@ -47,7 +47,7 @@
               <span class="arrow">→</span>
               <span>计划完成 <b>{{ fmtDT(item.planEnd) }}</b></span>
             </div>
-            <div class="qc-tip">{{ item.status === '已下达' ? '点击卡片编辑优先级' : '' }}</div>
+            <div class="qc-tip">{{ item.status === TaskGroupStatus.RELEASED ? '点击卡片编辑任务组' : '' }}</div>
           </div>
         </template>
         <el-empty v-else :description="loading ? '' : '暂无已下达/生产中的排产任务'" />
@@ -108,25 +108,124 @@
       </div>
     </ContentWrap>
 
-    <!-- 优先级编辑弹窗 -->
-    <el-dialog v-model="prioVisible" title="调整排产优先级" width="420px" append-to-body>
-      <div v-if="editing" class="prio-body">
-        <div class="prio-row">
-          <span class="prio-label">任务组</span>
-          <b>{{ editing.code }}</b>
-          <span class="prio-note">{{ editing.description }}</span>
-        </div>
-        <el-form label-width="80px" label-position="left">
-          <el-form-item label="优先级">
-            <el-select v-model="editingPriority" class="!w-full" placeholder="请选择优先级">
-              <el-option v-for="p in prioOptions" :key="p" :label="p" :value="p" />
-            </el-select>
-          </el-form-item>
-        </el-form>
-      </div>
+    <!-- 任务组编辑弹窗 -->
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="800px" append-to-body>
+      <el-form
+        ref="formRef"
+        :model="formData"
+        :rules="formRules"
+        label-width="110px"
+        v-loading="formLoading"
+      >
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="任务组编号" prop="code">
+              <el-input v-model="formData.code" placeholder="请输入任务组编号" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="优先级" prop="prio">
+              <el-select v-model="formData.prio" placeholder="请选择优先级" class="!w-100%">
+                <el-option
+                  v-for="p in LabTaskGroupPriorityEnum"
+                  :key="p.value"
+                  :label="p.label"
+                  :value="p.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="计划开始时间" prop="planStart">
+              <el-date-picker
+                v-model="formData.planStart"
+                type="datetime"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                placeholder="选择计划开始时间"
+                class="!w-100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="计划完成时间" prop="planEnd">
+              <el-date-picker
+                v-model="formData.planEnd"
+                type="datetime"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                placeholder="选择计划完成时间"
+                class="!w-100%"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="任务组描述" prop="description">
+          <el-input
+            v-model="formData.description"
+            type="textarea"
+            :rows="2"
+            placeholder="请输入任务组描述"
+          />
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-select v-model="formData.status" placeholder="请选择状态" class="!w-100%">
+            <el-option
+              v-for="s in LabTaskGroupStatusEnum"
+              :key="s.value"
+              :label="s.label"
+              :value="s.value"
+            />
+          </el-select>
+        </el-form-item>
+
+        <!-- 配方关联子表 -->
+        <el-divider content-position="left">配方关联</el-divider>
+        <el-table :data="formData.linkList" border>
+          <el-table-column label="明细序号" type="index" align="center" width="60" />
+          <el-table-column label="配方编号" prop="formulaCode" min-width="260">
+            <template #default="{ row, $index }">
+              <el-form-item
+                :prop="`linkList.${$index}.formulaCode`"
+                :rules="formRules.formulaCode"
+                class="mb-0px!"
+              >
+                <el-select
+                  v-model="row.formulaCode"
+                  placeholder="请选择已下达的配方"
+                  filterable
+                  clearable
+                  class="!w-100%"
+                  @change="handleFormulaChange(row, $event)"
+                >
+                  <el-option
+                    v-for="f in formulaOptions"
+                    :key="f.id"
+                    :label="`${f.code}｜${f.section || ''}｜${f.description || ''}`"
+                    :value="f.code"
+                  />
+                </el-select>
+              </el-form-item>
+            </template>
+          </el-table-column>
+          <el-table-column label="配方描述" prop="negFormula" min-width="200">
+            <template #default="{ row }">
+              <el-form-item class="mb-0px!">
+                <el-input v-model="row.negFormula" placeholder="选择配方后自动带出" disabled />
+              </el-form-item>
+            </template>
+          </el-table-column>
+          <el-table-column align="center" label="操作" width="60">
+            <template #default="{ $index }">
+              <el-button link type="danger" @click="handleDeleteLink($index)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-button type="primary" plain class="mt-2" @click="handleAddLink">
+          <Icon icon="ep:plus" class="mr-5px" /> 新增配方
+        </el-button>
+      </el-form>
       <template #footer>
-        <el-button type="primary" :loading="saving" @click="savePriority">保 存</el-button>
-        <el-button @click="prioVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitForm" :disabled="formLoading">保 存</el-button>
+        <el-button @click="dialogVisible = false">取 消</el-button>
       </template>
     </el-dialog>
   </div>
@@ -136,10 +235,18 @@
 import dayjs from 'dayjs'
 import { getSchedulePage, ScheduleTaskVO } from '@/api/lab/schedule'
 import {
+  getLabTaskGroupPriorityLabel,
+  getLabTaskGroupStatusLabel,
+  getTaskGroup,
   getTaskGroupQueue,
+  LabTaskGroupPriorityEnum,
+  LabTaskGroupStatusEnum,
+  TaskGroupLinkVO,
   TaskGroupQueueVO,
-  updateTaskGroupPriority
+  TaskGroupVO,
+  updateTaskGroup
 } from '@/api/lab/taskGroup'
+import { getReleasedFormulaList, FormulaSimpleVO } from '@/api/lab/formula'
 
 defineOptions({ name: 'LabPlanSchedule' })
 
@@ -148,13 +255,16 @@ const message = useMessage()
 // ============ 排产队列 ============
 const loading = ref(false)
 const queueList = ref<TaskGroupQueueVO[]>([])
-const prioOptions = ['高', '中', '低']
 
 const simClass = (s?: string) => {
   if (s === '仿真运行中') return 'run'
   if (s === '仿真完成') return 'done'
   return 'wait'
 }
+
+// 优先级数字 → 名称 / 卡片标签样式
+const prioLabel = (p?: number) => getLabTaskGroupPriorityLabel(p)
+const prioClass = (p?: number) => prioLabel(p) || '低'
 
 const loadQueue = async () => {
   loading.value = true
@@ -165,29 +275,90 @@ const loadQueue = async () => {
   }
 }
 
-// 优先级编辑
-const prioVisible = ref(false)
-const saving = ref(false)
-const editing = ref<TaskGroupQueueVO>()
-const editingPriority = ref('')
+// 任务组状态数字枚举（与后端 TaskGroupStatusEnum 对齐：1-新建、2-已下达、3-生产中、4-已完工、5-取消）
+const TaskGroupStatus = {
+  NEW: 1,
+  RELEASED: 2,
+  PRODUCING: 3,
+  COMPLETED: 4,
+  CANCELED: 5
+} as const
 
-const openPriority = (item: TaskGroupQueueVO) => {
-  if (item.status !== '已下达') return
-  editing.value = item
-  editingPriority.value = item.prio || '中'
-  prioVisible.value = true
+// ============ 任务组编辑（点击排产队列卡片） ============
+const dialogVisible = ref(false)
+const dialogTitle = ref('')
+const formLoading = ref(false)
+const formRef = ref()
+const formData = ref<TaskGroupVO>({
+  id: undefined,
+  code: '',
+  description: '',
+  prio: undefined,
+  planStart: '',
+  planEnd: '',
+  status: TaskGroupStatus.NEW,
+  linkList: [] as TaskGroupLinkVO[]
+})
+const formRules = reactive({
+  code: [{ required: true, message: '任务组编号不能为空', trigger: 'blur' }],
+  formulaCode: [{ required: true, message: '配方编号不能为空', trigger: 'blur' }]
+})
+// 状态数字 → 名称 / 卡片标签样式
+const statusLabel = (s?: number) => getLabTaskGroupStatusLabel(s)
+const statusClass = (s?: number) => statusLabel(s) || '已下达'
+
+// 已下达状态的配方下拉数据源
+const formulaOptions = ref<FormulaSimpleVO[]>([])
+const getFormulaOptions = async () => {
+  formulaOptions.value = await getReleasedFormulaList()
 }
 
-const savePriority = async () => {
-  if (!editing.value) return
-  saving.value = true
+const openEdit = async (item: TaskGroupQueueVO) => {
+  if (item.status !== TaskGroupStatus.RELEASED) return
+  dialogVisible.value = true
+  dialogTitle.value = '编辑实验任务组'
+  formRef.value?.resetFields()
+  formLoading.value = true
   try {
-    await updateTaskGroupPriority(editing.value.id, editingPriority.value)
-    message.success('优先级已更新为「' + editingPriority.value + '」，已重新排产')
-    prioVisible.value = false
-    await loadQueue()
+    const data = await getTaskGroup(item.id)
+    formData.value = data
+    if (!formData.value.linkList) {
+      formData.value.linkList = []
+    }
   } finally {
-    saving.value = false
+    formLoading.value = false
+  }
+}
+
+/** 选择配方后自动带出配方描述 */
+const handleFormulaChange = (row: TaskGroupLinkVO, code?: string) => {
+  const formula = formulaOptions.value.find((f) => f.code === code)
+  row.negFormula = formula?.description ?? ''
+}
+
+/** 新增配方 */
+const handleAddLink = () => {
+  formData.value.linkList.push({ formulaCode: '', negFormula: '' })
+}
+
+/** 删除配方 */
+const handleDeleteLink = (index: number) => {
+  formData.value.linkList.splice(index, 1)
+}
+
+/** 保存任务组并重新排产 */
+const submitForm = async () => {
+  if (!formData.value.id) return
+  await formRef.value.validate()
+  formLoading.value = true
+  try {
+    await updateTaskGroup({ ...formData.value })
+    message.success('任务组已更新，已重新排产')
+    dialogVisible.value = false
+    await loadQueue()
+    await loadGantt()
+  } finally {
+    formLoading.value = false
   }
 }
 
@@ -333,6 +504,7 @@ const stKey = (s?: string) => {
 onMounted(() => {
   loadQueue()
   loadGantt()
+  getFormulaOptions()
 })
 </script>
 
@@ -626,26 +798,4 @@ onMounted(() => {
   background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.18) 0 6px, transparent 6px 12px);
 }
 .gb-已完成 { background: var(--accent-green); }
-
-/* ---- 优先级弹窗 ---- */
-.prio-body {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.prio-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.prio-label {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-.prio-note {
-  width: 100%;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
 </style>

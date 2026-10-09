@@ -20,7 +20,12 @@
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable class="!w-240px">
-          <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />
+          <el-option
+            v-for="s in LabTaskGroupStatusEnum"
+            :key="s.value"
+            :label="s.label"
+            :value="s.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -49,7 +54,9 @@
         </template>
       </el-table-column>
       <el-table-column label="任务组描述" align="center" prop="description" min-width="200" />
-      <el-table-column label="优先级" align="center" prop="prio" min-width="90" />
+      <el-table-column label="优先级" align="center" prop="prio" min-width="90">
+        <template #default="{ row }">{{ getLabTaskGroupPriorityLabel(row.prio) }}</template>
+      </el-table-column>
       <el-table-column
         label="计划开始时间"
         align="center"
@@ -64,7 +71,13 @@
         :formatter="dateFormatter"
         width="170px"
       />
-      <el-table-column label="状态" align="center" prop="status" min-width="90" />
+      <el-table-column label="状态" align="center" prop="status" min-width="90">
+        <template #default="{ row }">
+          <el-tag :type="statusTagType(row.status)" effect="light">
+            {{ getLabTaskGroupStatusLabel(row.status) }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column
         label="创建时间"
         align="center"
@@ -83,7 +96,7 @@
             编辑
           </el-button>
           <el-button
-            v-if="scope.row.status === '新建'"
+            v-if="scope.row.status === TaskGroupStatus.NEW"
             link
             type="primary"
             @click="handleRelease(scope.row)"
@@ -120,7 +133,14 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="优先级" prop="prio">
-            <el-input v-model="formData.prio" placeholder="请输入优先级" />
+            <el-select v-model="formData.prio" placeholder="请选择优先级" class="!w-100%">
+              <el-option
+                v-for="p in LabTaskGroupPriorityEnum"
+                :key="p.value"
+                :label="p.label"
+                :value="p.value"
+              />
+            </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -156,7 +176,12 @@
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="formData.status" placeholder="请选择状态" class="!w-100%">
-          <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />
+          <el-option
+            v-for="s in LabTaskGroupStatusEnum"
+            :key="s.value"
+            :label="s.label"
+            :value="s.value"
+          />
         </el-select>
       </el-form-item>
 
@@ -218,8 +243,12 @@ import { dateFormatter } from '@/utils/formatTime'
 import { getReleasedFormulaList, FormulaSimpleVO } from '@/api/lab/formula'
 import {
   createTaskGroup,
+  getLabTaskGroupPriorityLabel,
+  getLabTaskGroupStatusLabel,
   getTaskGroup,
   getTaskGroupPage,
+  LabTaskGroupPriorityEnum,
+  LabTaskGroupStatusEnum,
   releaseTaskGroup,
   TaskGroupLinkVO,
   TaskGroupVO,
@@ -242,8 +271,31 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 
-// 状态选项
-const statusOptions = ['新建', '已下达', '生产中', '已完工', '取消']
+// 任务组状态数字枚举（与后端 TaskGroupStatusEnum 对齐：1-新建、2-已下达、3-生产中、4-已完工、5-取消）
+const TaskGroupStatus = {
+  NEW: 1,
+  RELEASED: 2,
+  PRODUCING: 3,
+  COMPLETED: 4,
+  CANCELED: 5
+} as const
+/** 状态值 → el-tag 类型（列表状态列背景色） */
+const statusTagType = (status?: number) => {
+  switch (status) {
+    case TaskGroupStatus.NEW:
+      return 'info'
+    case TaskGroupStatus.RELEASED:
+      return 'primary'
+    case TaskGroupStatus.PRODUCING:
+      return 'warning'
+    case TaskGroupStatus.COMPLETED:
+      return 'success'
+    case TaskGroupStatus.CANCELED:
+      return 'danger'
+    default:
+      return 'info'
+  }
+}
 
 /** 查询列表 */
 const getList = async () => {
@@ -301,10 +353,10 @@ const formData = ref({
   id: undefined,
   code: '',
   description: '',
-  prio: '',
+  prio: undefined,
   planStart: '',
   planEnd: '',
-  status: '新建',
+  status: TaskGroupStatus.NEW,
   linkList: [] as TaskGroupLinkVO[]
 })
 const formRules = reactive({
@@ -369,10 +421,10 @@ const resetForm = () => {
     id: undefined,
     code: '',
     description: '',
-    prio: '',
+    prio: undefined,
     planStart: '',
     planEnd: '',
-    status: '新建',
+    status: TaskGroupStatus.NEW,
     linkList: []
   }
   formRef.value?.resetFields()

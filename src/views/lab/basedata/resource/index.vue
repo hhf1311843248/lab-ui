@@ -69,6 +69,11 @@
         </template>
       </el-table-column>
       <el-table-column label="班次" align="center" prop="shift" width="120" />
+      <el-table-column label="设备节拍" align="center" width="150">
+        <template #default="scope">
+          {{ scope.row.beatTime != null ? `${scope.row.beatTime} ${formatBeatUnit(scope.row.beatUnit)}` : '—' }}
+        </template>
+      </el-table-column>
       <el-table-column label="状态" align="center" prop="status" width="100">
         <template #default="scope">
           <el-tag
@@ -152,6 +157,26 @@
         <el-col :span="12">
           <el-form-item label="班次" prop="shift">
             <el-input v-model="formData.shift" placeholder="请输入班次/可用时段" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="设备节拍" prop="beatTime">
+            <el-input-number v-model="formData.beatTime" :min="0" :precision="4" class="!w-1/1" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="节拍单位" prop="beatUnit">
+            <div class="flex items-center !w-1/1">
+              <el-select v-model="formData.beatUnit" class="!flex-1">
+                <el-option
+                  v-for="u in beatUnitOptions"
+                  :key="u.value"
+                  :label="u.label"
+                  :value="u.value"
+                />
+              </el-select>
+              <span class="ml-8px text-gray-500">/件</span>
+            </div>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -242,8 +267,21 @@ const formData = ref({
   type: undefined,
   sectionCode: undefined,
   shift: undefined,
+  beatTime: undefined,
+  beatUnit: 'h', // 默认小时
   status: 1 // 空闲
 })
+// 节拍单位选项：h-小时、m-分钟、s-秒
+const beatUnitOptions = [
+  { value: 'h', label: 'h（小时）' },
+  { value: 'm', label: 'm（分钟）' },
+  { value: 's', label: 's（秒）' }
+]
+/** 节拍单位展示：h/m/s + /件（兼容旧数据已存 h/件） */
+const formatBeatUnit = (unit?: string): string => {
+  const u = unit || 'h'
+  return u.includes('/') ? u : `${u}/件`
+}
 const formRules = reactive({
   code: [{ required: true, message: '资源编号不能为空', trigger: 'blur' }],
   name: [{ required: true, message: '资源名称不能为空', trigger: 'blur' }],
@@ -301,6 +339,8 @@ const resetForm = () => {
     type: undefined,
     sectionCode: undefined,
     shift: undefined,
+    beatTime: undefined,
+    beatUnit: 'h', // 默认小时
     status: 1 // 空闲
   }
   formRef.value?.resetFields()

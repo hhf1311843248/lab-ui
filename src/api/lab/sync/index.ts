@@ -85,6 +85,7 @@ export interface SyncComprehensiveVO {
   status: number
   dataId: string
   dataUpdateTime: string
+  remark?: string
   createTime: string
 }
 

@@ -88,21 +88,119 @@
     />
   </ContentWrap>
 
-  <!-- 查看详情弹窗（供应商定义，仅查看） -->
-  <el-dialog v-model="detailVisible" :title="detailTitle" width="720px" append-to-body>
-    <el-descriptions :column="2" border>
-      <el-descriptions-item label="所属段">{{ formatSyncSegment(detailData.segmentCode) }}</el-descriptions-item>
-      <el-descriptions-item label="判定方式">{{ getLabComprehensiveModeLabel(detailData.mode) }}</el-descriptions-item>
-      <el-descriptions-item label="规则名称" :span="2">{{ detailData.name }}</el-descriptions-item>
-      <el-descriptions-item label="参与检测项目" :span="2">
-        {{ formatProjectTypes(detailData.projectTypes) }}
-      </el-descriptions-item>
-      <el-descriptions-item label="主检测项目">{{ getLabProjectTypeLabel(detailData.mainProjectType) || '—' }}</el-descriptions-item>
-    </el-descriptions>
-    <el-divider content-position="left">综合判定配置</el-divider>
-    <div class="config-box">
-      <JsonView :value="parseJson(detailData.comprehensiveJson)" context="comprehensive" />
+  <!-- 查看详情弹窗（供应商定义，仅展示：输入框禁用，无编辑按钮） -->
+  <el-dialog v-model="detailVisible" :title="detailTitle" width="760px" append-to-body>
+    <!-- 判定与处置 -->
+    <div class="judge-banner">
+      <div class="banner-title">判定与处置</div>
+      <div class="banner-desc">{{ modeBannerText }}</div>
     </div>
+
+    <!-- 基本信息 -->
+    <div class="form-sec-title">基本信息</div>
+    <el-form label-width="90px" class="detail-form">
+      <el-form-item label="规则名称">
+        <el-input :model-value="detailData.name" disabled placeholder="请输入规则名称" />
+      </el-form-item>
+      <el-form-item label="参与检测项目">
+        <el-checkbox-group :model-value="projectTypeList" disabled>
+          <el-checkbox v-for="pt in projectTypeList" :key="pt" :value="pt">
+            {{ getLabProjectTypeLabel(pt) }}
+          </el-checkbox>
+        </el-checkbox-group>
+      </el-form-item>
+      <el-form-item label="判定方式">
+        <el-radio-group :model-value="detailData.mode" disabled>
+          <el-radio :value="1">按判定项数</el-radio>
+          <el-radio :value="2">按项目组合</el-radio>
+        </el-radio-group>
+      </el-form-item>
+    </el-form>
+
+    <!-- 按判定项数：项数处置规则 -->
+    <template v-if="detailData.mode === 1">
+      <div class="form-sec-title">项数处置规则</div>
+      <el-table :data="countRules" border size="small" class="judge-table">
+        <el-table-column label="#" type="index" align="center" width="56" />
+        <el-table-column label="不合格项数" align="center" min-width="130">
+          <template #default="{ row }">
+            <el-input-number :model-value="row.failCount" disabled :controls="false" class="rule-input" />
+          </template>
+        </el-table-column>
+        <el-table-column label="预警项数" align="center" min-width="130">
+          <template #default="{ row }">
+            <el-input-number :model-value="row.warningCount" disabled :controls="false" class="rule-input" />
+          </template>
+        </el-table-column>
+        <el-table-column label="处理方式" align="center" width="150">
+          <template #default="{ row }">
+            <el-select :model-value="row.disposition" disabled class="!w-130px">
+              <el-option :value="row.disposition" :label="getDispositionLabel(row.disposition)" />
+            </el-select>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div class="judge-tip" style="margin-top: 8px">
+        按不合格项数和预警项数精确匹配，其余项目为合格。不自动合并两种判定，未匹配时待处置。
+      </div>
+    </template>
+
+    <!-- 按项目组合：主检测项目 + 组合规则 -->
+    <template v-else>
+      <el-form label-width="90px" class="detail-form">
+        <el-form-item label="主检测项目">
+          <el-select :model-value="detailData.mainProjectType" disabled class="!w-200px">
+            <el-option
+              :value="detailData.mainProjectType"
+              :label="getLabProjectTypeLabel(detailData.mainProjectType) || '—'"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div class="form-sec-title">组合规则</div>
+      <el-table :data="combinations" border size="small" class="judge-table">
+        <el-table-column label="#" type="index" align="center" width="56" />
+        <el-table-column
+          v-for="pt in projectTypeList"
+          :key="pt"
+          :label="getLabProjectTypeLabel(pt)"
+          align="center"
+          min-width="120"
+        >
+          <template #default="{ row }">
+            <el-select :model-value="resultOf(row, pt)" disabled class="!w-110px">
+              <el-option :value="resultOf(row, pt)" :label="getComResultLabel(resultOf(row, pt))" />
+            </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column label="处置方式" align="center" width="150">
+          <template #default="{ row }">
+            <el-select :model-value="row.disposition" disabled class="!w-130px">
+              <el-option :value="row.disposition" :label="getDispositionLabel(row.disposition)" />
+            </el-select>
+          </template>
+        </el-table-column>
+      </el-table>
+    </template>
+
+    <!-- 状态 -->
+    <div class="form-sec-title">状态</div>
+    <el-form label-width="90px" class="detail-form">
+      <el-form-item label="状态">
+        <el-radio-group :model-value="detailData.status" disabled>
+          <el-radio :value="1">启用</el-radio>
+          <el-radio :value="0">停用</el-radio>
+        </el-radio-group>
+      </el-form-item>
+    </el-form>
+
+    <!-- 其他信息 -->
+    <div class="form-sec-title">其他信息</div>
+    <el-form label-width="90px" class="detail-form">
+      <el-form-item label="备注">
+        <el-input :model-value="detailData.remark" type="textarea" :rows="3" disabled placeholder="请输入备注" />
+      </el-form-item>
+    </el-form>
   </el-dialog>
 </template>
 
@@ -117,7 +215,6 @@ import {
   formatSyncSegment
 } from '@/api/lab/sync'
 import { LabSectionEnum } from '@/api/lab/resource'
-import JsonView from '@/views/lab/basedata/sync/components/JsonView.vue'
 
 defineOptions({ name: 'LabBasedataComprehensive' })
 
@@ -194,6 +291,55 @@ const parseJson = (json?: string) => {
   }
 }
 
+/** 综合判定完整配置（已解析） */
+const comprehensiveObject = computed(() => parseJson(detailData.value.comprehensiveJson))
+
+/** 判定与处置说明（按判定方式） */
+const modeBannerText = computed(() => {
+  if (detailData.value.mode === 2) {
+    return '检测全部完成后，先匹配组合规则；未命中时按主检测项处置。单项判定保留，返工暂不可用。'
+  }
+  return '单项判定与最终处置独立。检测全部完成后匹配规则；缺项或未匹配规则时待处置。正常通过不改变单项判定。'
+})
+
+/** 参与检测项目（数字列表） */
+const projectTypeList = computed(() => {
+  const s = detailData.value.projectTypes
+  if (!s) {
+    return []
+  }
+  return s
+    .split(',')
+    .map((n) => Number(n))
+    .filter((n) => !Number.isNaN(n))
+})
+
+/** 按判定项数：项数处置规则 */
+const countRules = computed(() =>
+  Array.isArray(comprehensiveObject.value.countRules) ? comprehensiveObject.value.countRules : []
+)
+
+/** 按项目组合：组合规则 */
+const combinations = computed(() =>
+  Array.isArray(comprehensiveObject.value.combinations) ? comprehensiveObject.value.combinations : []
+)
+
+/** 组合规则中指定项目的判定结论 */
+const resultOf = (combo: any, projectType: number) => {
+  const r = (combo.results || []).find((item) => item.projectType === projectType)
+  return r ? r.result : null
+}
+
+/** 处置方式标签：1-正常通过、2-不合格拦截 */
+const getDispositionLabel = (disposition?: number) => {
+  return ({ 1: '正常通过', 2: '不合格拦截' } as Record<number, string>)[disposition ?? -1] ?? '—'
+}
+
+/** 项目结论标签：1-合格、2-预警、3-不合格 */
+const getComResultLabel = (result?: number) => {
+  return ({ 1: '合格', 2: '预警', 3: '不合格' } as Record<number, string>)[result ?? -1] ?? '—'
+}
+
 /** 初始化 **/
 onMounted(() => {
   getList()
@@ -201,12 +347,73 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.config-box {
-  max-height: 380px;
-  overflow-y: auto;
-  padding: 4px 12px;
+/* 判定与处置信息条 */
+.judge-banner {
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  background: rgba(0, 240, 255, 0.06);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+.banner-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  margin-bottom: 4px;
+}
+.banner-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+/* 分段标题：青色强调竖线 + 亮色字体，与深色赛博主题一致 */
+.form-sec-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 4px 0 12px;
+  padding-left: 10px;
+  border-left: 3px solid var(--accent-cyan);
+}
+.form-sec-title:first-child {
+  margin-top: 0;
+}
+.detail-form .el-form-item {
+  margin-bottom: 12px;
+}
+/* 参与检测项目：单行展示，不换行 */
+.detail-form :deep(.el-checkbox-group) {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+.detail-form :deep(.el-checkbox) {
+  margin-right: 14px;
+  white-space: nowrap;
+}
+.detail-form :deep(.el-checkbox__label) {
+  white-space: nowrap;
+}
+/* 规则表格（深色主题适配） */
+.judge-table {
+  --el-table-border-color: var(--border-color);
+  --el-table-header-bg-color: rgba(0, 240, 255, 0.06);
+  --el-table-header-text-color: var(--text-primary);
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-row-hover-bg-color: rgba(0, 240, 255, 0.06);
+  --el-table-text-color: var(--text-primary);
+  background-color: transparent;
+}
+.rule-input {
+  width: 110px;
+}
+.judge-tip {
+  margin-top: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: rgba(0, 240, 255, 0.08);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  background-color: var(--bg-card);
 }
 </style>

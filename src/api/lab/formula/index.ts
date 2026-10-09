@@ -6,12 +6,14 @@ export interface FormulaFeedVO {
   feedProc?: string
   seq?: number
   feedSeq?: number
+  materialName?: string
   materialCode?: string
   cat1?: string
   cat2?: string
   quantity?: number
   unit?: string
   deviation?: number
+  tolerance?: string
   createTime?: Date
 }
 
@@ -29,7 +31,7 @@ export interface FormulaVO {
   section?: string
   code: string
   version?: string
-  current?: string
+  isCurrent?: string
   sysCode?: string
   rdClass?: string
   pole?: string
@@ -74,6 +76,11 @@ export const deleteFormula = async (id) => {
   return await request.delete({ url: '/lab/formula/delete?id=' + id, method: 'delete' })
 }
 
+// 复制配方（生成新配方：状态重置为新建，编号加 -C 后缀，明细/实验方案一并复制）
+export const copyFormula = async (id) => {
+  return await request.post({ url: '/lab/formula/copy?id=' + id })
+}
+
 // 提交评审：新建 → 评审中
 export const submitReviewFormula = async (id) => {
   return await request.post({ url: '/lab/formula/submit-review?id=' + id })
@@ -102,4 +109,26 @@ export const getFormulaPage = async (params) => {
 // 获得已下达状态的配方简单列表（下拉选择用）
 export const getReleasedFormulaList = async () => {
   return await request.get({ url: '/lab/formula/list-released' })
+}
+
+// ========== 配方检测配置变更（用户在配方页面编辑供应商检测配置后入库） ==========
+
+export interface FormulaConfigOverrideVO {
+  id?: number
+  formulaId?: number
+  dataId?: string
+  configType?: string
+  configJson?: string
+  originalJson?: string
+  createTime?: Date
+}
+
+// 批量保存配方检测配置变更（按配方id + 供应商dataId + 类型覆盖更新）
+export const saveFormulaConfigOverrides = async (data: FormulaConfigOverrideVO[]) => {
+  return await request.post({ url: '/lab/formula/config-override/save', data })
+}
+
+// 获得指定配方的检测配置变更列表
+export const getFormulaConfigOverrideList = async (formulaId: number) => {
+  return await request.get({ url: '/lab/formula/config-override/list-by-formula?formulaId=' + formulaId })
 }

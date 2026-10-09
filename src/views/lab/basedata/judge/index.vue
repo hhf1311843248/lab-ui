@@ -60,7 +60,11 @@
           {{ getLabProjectTypeLabel(scope.row.projectType) }}
         </template>
       </el-table-column>
-      <el-table-column label="结果值" align="center" prop="resultCode" min-width="140" />
+      <el-table-column label="结果值" align="center" min-width="160">
+        <template #default="scope">
+          {{ getResultCodeLabel(scope.row.resultCode) }}
+        </template>
+      </el-table-column>
       <el-table-column label="判定准则" align="center" width="120">
         <template #default="scope">
           {{ getLabJudgeModeLabel(scope.row.mode) }}

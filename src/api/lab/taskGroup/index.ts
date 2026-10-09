@@ -1,5 +1,39 @@
 import request from '@/config/axios'
 
+/**
+ * 任务组优先级枚举：数字 Code 与名称（1-高、2-中、3-低）
+ */
+export const LabTaskGroupPriorityEnum = [
+  { value: 1, label: '高' },
+  { value: 2, label: '中' },
+  { value: 3, label: '低' }
+]
+
+/**
+ * 根据优先级值获得优先级名称
+ */
+export const getLabTaskGroupPriorityLabel = (prio?: number): string => {
+  return LabTaskGroupPriorityEnum.find((item) => item.value === prio)?.label ?? ''
+}
+
+/**
+ * 任务组状态枚举：数字 Code 与名称（1-新建、2-已下达、3-生产中、4-已完工、5-取消）
+ */
+export const LabTaskGroupStatusEnum = [
+  { value: 1, label: '新建' },
+  { value: 2, label: '已下达' },
+  { value: 3, label: '生产中' },
+  { value: 4, label: '已完工' },
+  { value: 5, label: '取消' }
+]
+
+/**
+ * 根据状态值获得状态名称
+ */
+export const getLabTaskGroupStatusLabel = (status?: number): string => {
+  return LabTaskGroupStatusEnum.find((item) => item.value === status)?.label ?? ''
+}
+
 export interface TaskGroupLinkVO {
   id?: number
   groupId?: number
@@ -12,10 +46,10 @@ export interface TaskGroupVO {
   id?: number
   code: string
   description?: string
-  prio?: string
+  prio?: number
   planStart?: string
   planEnd?: string
-  status?: string
+  status?: number
   linkList: TaskGroupLinkVO[]
   createTime?: Date
 }
@@ -25,10 +59,10 @@ export interface TaskGroupQueueVO {
   id?: number
   code: string
   description?: string
-  prio: string
+  prio?: number
   planStart?: string
   planEnd?: string
-  status: string
+  status: number
   sections?: string[]
   processCount?: number
   formulaCount?: number
